@@ -10,17 +10,16 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     ThreadUdpR thudpr;
-    UdpServer *m_pus=new UdpServer();
-
-    m_pus->init();
+    UdpServer us;
 
     QObject::connect(&thudpr,SIGNAL(finished()),&a,SLOT(quit()));
-    QObject::connect(m_pus,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
+    QObject::connect(&us,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
 
     thudpr.start();
 
-    qDebug("hello");
+    qDebug("app6u start");
 
-    thudpr.wait();
+    // !!!!!!! will block udp recv
+    //thudpr.wait();
     return a.exec();
 }

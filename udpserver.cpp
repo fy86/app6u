@@ -5,7 +5,7 @@
 UdpServer::UdpServer(QObject *parent) :
     QObject(parent)
 {
-    //init();
+    init();
 }
 
 void UdpServer::init()
@@ -20,7 +20,9 @@ void UdpServer::init()
 
 void UdpServer::readData()
 {
+    //qDebug(" udp read data");
     while (m_pus->hasPendingDatagrams()) {
+        //qDebug(" udp read data while");
         QByteArray datagram;
         datagram.resize(m_pus->pendingDatagramSize());
         QHostAddress sender;
@@ -34,7 +36,5 @@ void UdpServer::readData()
         }
         //processTheDatagram(datagram);
     }
-
-
 
 }
