@@ -91,8 +91,8 @@ void threaduart::run()
         len = read(fd,buf,100);
         if(len>0){
             qDebug(" 2 !!!!!!! can.uart.read %d",len);
-            m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7755);
-            m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7756);
+            //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7755);
+            //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7756);
         }
     }
 
