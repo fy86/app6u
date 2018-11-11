@@ -13,6 +13,7 @@ public:
     QUdpSocket *m_pus;
 
     void init();
+    void test();
 signals:
     void newChar(char ch);
 
