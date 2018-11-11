@@ -50,6 +50,38 @@ threaduart::threaduart(QObject *parent) :
 #endif
 }
 
+void threaduart::init()
+{
+    m_pusSend = new QUdpSocket(this);
+
+    m_pusRcv = new QUdpSocket(this);
+    //QHostAddress gAddr=QHostAddress("239.255.43.21");
+
+    m_pusRcv->bind(QHostAddress::LocalHost,7756,QUdpSocket::ShareAddress);
+    m_pusRcv->joinMulticastGroup(QHostAddress("239.255.43.21"));
+
+    connect(m_pusRcv, SIGNAL(readyRead()),this, SLOT(readData()));
+
+}
+void threaduart::readData()
+{
+    //qDebug(" udp read data");
+    while (m_pusRcv->hasPendingDatagrams()) {
+        //qDebug(" udp read data while");
+        QByteArray datagram;
+        datagram.resize(m_pusRcv->pendingDatagramSize());
+        QHostAddress sender;
+        quint16 senderPort;
+
+        m_pusRcv->readDatagram(datagram.data(), datagram.size(),&sender, &senderPort);
+
+        for(int i=0;i<datagram.size();i++){
+            qDebug(" thread.uart udp rcv : %02x",0x0ff & datagram.at(i));
+            //emit newChar(datagram.at(i));
+        }
+    }
+
+}
 
 void threaduart::run()
 {
@@ -59,6 +91,7 @@ void threaduart::run()
         len = read(fd,buf,100);
         if(len>0){
             qDebug(" !!!!!!! can.uart.read %d",len);
+            m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7756);
         }
     }
 

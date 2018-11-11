@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <QUdpSocket>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -17,7 +18,12 @@ class threaduart : public QThread
 public:
     explicit threaduart(QObject *parent = 0);
 
+    void init();
+
     bool m_bArm;//
+    QUdpSocket *m_pusSend;
+    QUdpSocket *m_pusRcv;
+
 
     // serial howto
     int fd,c, res;
@@ -33,6 +39,7 @@ protected:
 signals:
 
 public slots:
+    void readData();
 
 };
 
