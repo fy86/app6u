@@ -18,8 +18,19 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     udpserver.cpp \
-    threadudpr.cpp
+    threadudpr.cpp \
+    frameparser.cpp \
+    buffer16.cpp \
+    dataupload.cpp \
+    crc32.cpp \
+    threaduart.cpp
 
 HEADERS += \
     udpserver.h \
-    threadudpr.h
+    threadudpr.h \
+    mydef.h \
+    frameparser.h \
+    buffer16.h \
+    dataupload.h \
+    crc32.h \
+    threaduart.h
