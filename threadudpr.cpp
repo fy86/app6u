@@ -12,7 +12,7 @@ void ThreadUdpR::run()
     for(int n=0;;){
         if(!m_q.isEmpty()){
             ch = m_q.dequeue();
-            //qDebug("%02x",ch & 0x0ff);
+            qDebug("%02x",ch & 0x0ff);
             n++;
 
             m_ba16.append(ch);
