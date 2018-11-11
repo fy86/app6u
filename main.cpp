@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
     QObject::connect(&thudpr,SIGNAL(finished()),&a,SLOT(quit()));
     QObject::connect(&us,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
     QObject::connect(&thudpr,SIGNAL(sigF16(QByteArray)),&parser,SLOT(slotTest(QByteArray)));
+    QObject::connect(&thuart,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
 
     thuart.start();
     thudpr.start();

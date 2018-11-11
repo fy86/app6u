@@ -85,14 +85,18 @@ void threaduart::readData()
 
 void threaduart::run()
 {
+    int i;
     int len;
     if(!m_bArm)return;
     for(;;){
         len = read(fd,buf,100);
         if(len>0){
             qDebug(" 2 !!!!!!! can.uart.read %d",len);
-            m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7755);
-            m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7756);
+            for(i=0;i<len;i++){
+                emit newChar(buf[i]);
+            }
+            //m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7755);
+            //m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7756);
             //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7755);
             //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7756);
         }

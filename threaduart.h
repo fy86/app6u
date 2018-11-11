@@ -37,6 +37,7 @@ protected:
     void run();
 
 signals:
+    void newChar(char ch);
 
 public slots:
     void readData();
