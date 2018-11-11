@@ -29,7 +29,7 @@ void UdpServer::init()
     //QHostAddress gAddr=QHostAddress("239.255.43.21");
 
     m_pus->bind(QHostAddress::LocalHost,7755,QUdpSocket::ShareAddress);
-    m_pus->joinMulticastGroup(QHostAddress("239.255.43.21"));
+    //m_pus->joinMulticastGroup(QHostAddress("239.255.43.21"));
 
     connect(m_pus, SIGNAL(readyRead()),this, SLOT(readData()));
 }
