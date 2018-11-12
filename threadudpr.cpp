@@ -115,10 +115,17 @@ void ThreadUdpR::parseID32type()
 
 void ThreadUdpR::toStFrame(QByteArray ba, st_frame *pStFrame)
 {
+#if false
     pStFrame->id32 = ((0x0ff&ba.at(2))<<24)
             | ((0x0ff & ba.at(3))<<16)
             | ((0x0ff & ba.at(4))<<8)
             | (0x0ff & ba.at(5));
+#else
+    pStFrame->id32 = ((0x0ff&ba.at(5))<<24)
+            | ((0x0ff & ba.at(4))<<16)
+            | ((0x0ff & ba.at(3))<<8)
+            | (0x0ff & ba.at(2));
+#endif
     pStFrame->len = 8;
     memcpy(pStFrame->buf,ba.data()+6,8);
 
