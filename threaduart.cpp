@@ -82,6 +82,24 @@ void threaduart::readData()
     }
 
 }
+void threaduart::slotSendTest()
+{
+    QByteArray ba;
+
+    if(!m_bArm)return;
+
+    ba.clear();
+    ba.append((char)0xaa);ba.append((char)0x55);
+
+    ba.append((char)0x02);ba.append((char)0x20);ba.append((char)0x02);ba.append((char)0x00);
+
+    ba.append((char)0x99);ba.append((char)0xff);ba.append((char)0x02);ba.append((char)0x01);
+    ba.append((char)0xaa),ba.append((char)0xaa);ba.append((char)0xaa);ba.append((char)0x99);
+
+    ba.append((char)0x00);ba.append((char)0x88);
+
+    write(fd,ba.data(),16);
+}
 
 void threaduart::run()
 {
@@ -89,12 +107,13 @@ void threaduart::run()
     int len;
     if(!m_bArm)return;
     for(;;){
-        len = read(fd,buf,100);
+        len = read(fd,m_buf,100);
         if(len>0){
             qDebug(" 2 !!!!!!! can.uart.read %d",len);
             for(i=0;i<len;i++){
-                emit newChar(buf[i]);
+                emit newChar(m_buf[i]);
             }
+            QTimer::singleShot(1000,this,SLOT(slotSendTest()));
             //m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7755);
             //m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7756);
             //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7755);

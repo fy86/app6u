@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <QUdpSocket>
+#include <QTimer>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -28,7 +29,7 @@ public:
     // serial howto
     int fd,c, res;
     struct termios oldtio,newtio;
-    char buf[255];
+    char m_buf[255];
 
 
 
@@ -41,6 +42,7 @@ signals:
 
 public slots:
     void readData();
+    void slotSendTest();
 
 };
 
