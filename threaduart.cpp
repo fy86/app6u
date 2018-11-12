@@ -115,6 +115,7 @@ void threaduart::slotSendTest()
     ba.append((char)0x88);
 
     write(fd,ba.data(),16);
+    qDebug("  uart.slot.send.test   sum:%02x",sum);
 }
 
 void threaduart::run()
