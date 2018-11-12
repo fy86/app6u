@@ -99,24 +99,30 @@ void threaduart::slotSendTest()
     QByteArray ba;
     char sum;
 
-    qDebug(" start uart.slot send test");
     if(!m_isArm)return;
 
-    sum = sumChar(ba.data(),14);
-
     ba.clear();
-    ba.append((char)0xaa);ba.append((char)0x55);
+    ba.append((char)FRAME_1ST_CHAR);ba.append((char)FRAME_2ND_CHAR);
 
     ba.append((char)0x02);ba.append((char)0x20);ba.append((char)0x02);ba.append((char)0x00);
 
     ba.append((char)0x99);ba.append((char)0xff);ba.append((char)0x02);ba.append((char)0x01);
     ba.append((char)0xaa),ba.append((char)0xaa);ba.append((char)0xaa);ba.append((char)0x99);
 
+    sum = sumChar(ba.data(),14);
+    sum=0;
     ba.append(sum);
-    ba.append((char)0x88);
+    ba.append((char)FRAME_ENDING_CHAR);
 
     write(fd,ba.data(),16);
     qDebug("  uart.slot.send.test   sum:%02x",sum);
+}
+void threaduart::slotSend(QByteArray ba)
+{
+    if(!m_isArm)return;
+    if(ba.size()<1)return;
+    write(fd,ba.data(),ba.size());
+
 }
 
 void threaduart::run()

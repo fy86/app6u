@@ -134,19 +134,20 @@ void ThreadUdpR::toStFrame(QByteArray ba, st_frame *pStFrame)
 }
 // feng.check_packet()
 // 55 aa id32 data8 sum 88   2+4+8+1+1
+
 bool ThreadUdpR::hasValid16()
 {
     bool b=false;
     while(m_ba16.size()>=16){
-        if((char)0x55!=m_ba16.at(0)){
+        if((char)FRAME_1ST_CHAR != m_ba16.at(0)){
             m_ba16.remove(0,1);
             continue;
         }
-        if((char)0xaa!=m_ba16.at(1)){
+        if((char)FRAME_2ND_CHAR != m_ba16.at(1)){
             m_ba16.remove(0,2);
             continue;
         }
-        if((char)0x88!=m_ba16.at(15)){
+        if((char)FRAME_ENDING_CHAR != m_ba16.at(15)){
             m_ba16.remove(0,2);
             continue;
         }
@@ -193,7 +194,7 @@ void ThreadUdpR::print16()
 void ThreadUdpR::newChar(char ch)
 {
     m_q.enqueue(ch);
-    emit sigTest();
+    //emit sigTest();
 
 
 }

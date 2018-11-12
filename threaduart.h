@@ -12,6 +12,8 @@
 #include <termios.h>
 #include <stdio.h>
 
+#include "mydef.h"
+
 
 class threaduart : public QThread
 {
@@ -44,6 +46,7 @@ signals:
 public slots:
     void readData();
     void slotSendTest();
+    void slotSend(QByteArray ba);
 
 };
 
