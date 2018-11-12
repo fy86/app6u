@@ -13,7 +13,7 @@
 threaduart::threaduart(QObject *parent) :
     QThread(parent)
 {
-    m_bArm = false;
+    m_isArm = false;
 
 
     fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
@@ -37,7 +37,7 @@ threaduart::threaduart(QObject *parent) :
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd,TCSANOW,&newtio);
 
-    m_bArm = true;
+    m_isArm = true;
 
 #if 0
     while (STOP==FALSE) {       /* loop for input */
@@ -99,7 +99,8 @@ void threaduart::slotSendTest()
     QByteArray ba;
     char sum;
 
-    if(!m_bArm)return;
+    qDebug(" start uart.slot send test");
+    if(!m_isArm)return;
 
     sum = sumChar(ba.data(),14);
 
@@ -123,7 +124,7 @@ void threaduart::run()
     int i;
     int len;
     int sum=0;
-    if(!m_bArm)return;
+    if(!m_isArm)return;
     for(;;){
         len = read(fd,m_buf,100);
         if(len>0){

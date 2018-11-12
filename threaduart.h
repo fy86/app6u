@@ -22,7 +22,7 @@ public:
     void init();
     int sumChar(char *p,int len);
 
-    bool m_bArm;//
+    bool m_isArm;//
     QUdpSocket *m_pusSend;
     QUdpSocket *m_pusRcv;
 
