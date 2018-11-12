@@ -82,11 +82,26 @@ void threaduart::readData()
     }
 
 }
+int threaduart::sumChar(char *p, int len)
+{
+    int ret=0;
+    int i;
+    for(i=0;i<len;i++){
+        ret += 0x0ff & p[i];
+    }
+    ret &= 0x0ff;
+
+    return ret;
+}
+
 void threaduart::slotSendTest()
 {
     QByteArray ba;
+    char sum;
 
     if(!m_bArm)return;
+
+    sum = sumChar(ba.data(),14);
 
     ba.clear();
     ba.append((char)0xaa);ba.append((char)0x55);
@@ -96,7 +111,8 @@ void threaduart::slotSendTest()
     ba.append((char)0x99);ba.append((char)0xff);ba.append((char)0x02);ba.append((char)0x01);
     ba.append((char)0xaa),ba.append((char)0xaa);ba.append((char)0xaa);ba.append((char)0x99);
 
-    ba.append((char)0x00);ba.append((char)0x88);
+    ba.append(sum);
+    ba.append((char)0x88);
 
     write(fd,ba.data(),16);
 }

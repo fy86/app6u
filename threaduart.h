@@ -20,6 +20,7 @@ public:
     explicit threaduart(QObject *parent = 0);
 
     void init();
+    int sumChar(char *p,int len);
 
     bool m_bArm;//
     QUdpSocket *m_pusSend;
