@@ -121,11 +121,15 @@ void threaduart::run()
 {
     int i;
     int len;
+    int sum=0;
     if(!m_bArm)return;
     for(;;){
         len = read(fd,m_buf,100);
         if(len>0){
-            qDebug(" 2 !!!!!!! can.uart.read %d",len);
+            if(len>14){
+                sum=sumChar(m_buf,14);
+            }
+            qDebug(" 2 !!!!!!! can.uart.read %d   sum:0x%02x",len,sum);
             for(i=0;i<len;i++){
                 emit newChar(m_buf[i]);
             }
