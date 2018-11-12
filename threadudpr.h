@@ -54,6 +54,7 @@ protected:
 signals:
     void sigF16(QByteArray);
     void sigSTDframe(QByteArray);
+    void sigTest();
 
 public slots:
     void newChar(char ch);

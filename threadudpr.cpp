@@ -193,6 +193,7 @@ void ThreadUdpR::print16()
 void ThreadUdpR::newChar(char ch)
 {
     m_q.enqueue(ch);
+    emit sigTest();
 
 
 }
