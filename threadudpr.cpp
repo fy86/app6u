@@ -28,6 +28,8 @@ void ThreadUdpR::run()
                 baST.clear();
                 baST.append((char*)(&m_stFrame),sizeof(struct st_frame));
                 emit sigSTDframe(baST);
+
+                emit sigTest();
             }
 
             //testNewFrame();
