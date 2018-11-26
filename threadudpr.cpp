@@ -10,6 +10,11 @@ void ThreadUdpR::run()
     char ch;
     QByteArray ba,baST;
     for(int n=0;;){
+        if(m_q.isEmpty()){
+            m_mutex.lock();
+            m_wait.wait(&m_mutex);
+            m_mutex.unlock();
+        }
         if(!m_q.isEmpty()){
             ch = m_q.dequeue();
             qDebug("%02x",ch & 0x0ff);
@@ -205,6 +210,7 @@ void ThreadUdpR::newChar(char ch)
     m_q.enqueue(ch);
     //emit sigTest();
 
+    m_wait.wakeOne();
 
 }
 void ThreadUdpR::testNewFrame()

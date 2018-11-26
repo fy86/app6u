@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QThread>
 #include <QQueue>
+#include <QMutex>
+#include <QWaitCondition>
 
 #include "mydef.h"
 #include "frameparser.h"
@@ -15,6 +17,9 @@ class ThreadUdpR : public QThread
     Q_OBJECT
 public:
     explicit ThreadUdpR(QObject *parent = 0);
+
+    QWaitCondition m_wait;
+    QMutex m_mutex;
 
     dataUpload m_dataUpload;
 
