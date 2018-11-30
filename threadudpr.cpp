@@ -17,7 +17,7 @@ void ThreadUdpR::run()
         }
         if(!m_q.isEmpty()){
             ch = m_q.dequeue();
-            qDebug("%02x",ch & 0x0ff);
+            //qDebug("%02x",ch & 0x0ff);
             n++;
 
             m_ba16.append(ch);
@@ -34,7 +34,7 @@ void ThreadUdpR::run()
                 baST.append((char*)(&m_stFrame),sizeof(struct st_frame));
                 emit sigSTDframe(baST);
 
-                emit sigTest();
+                //emit sigTest();
             }
 
             //testNewFrame();
@@ -42,8 +42,289 @@ void ThreadUdpR::run()
     }
 
 }
+int ThreadUdpR::getID32(int src2821, int des2013, int type1209, int info8, int id71)
+{
+    int id32=0;
+
+    id32 |= (0x0ff & src2821)<<21;
+    id32 |= (0x0ff & des2013)<<13;
+    id32 |= (0x0f & type1209)<<9;
+    id32 |= (0x01 & info8)<<8;
+    id32 |= 0x0ff & id71;
+
+    qDebug(" getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+
+    return id32;
+}
+
+int ThreadUdpR::getBAStatFile()
+{
+    char b8;
+    m_baStatFile.clear();
+    for(int i=0;i<0x40;i++){
+        b8 = i + 0x10;
+        m_baStatFile.append(b8);
+    }
+    return 20;
+}
+int ThreadUdpR::mkBAStatN(int n)
+{
+    int ret=0;
+    char b8,bsum;
+    int i;
+    int len;
+
+    //qDebug(" mkba.stat.n : %d",n);
+
+    switch(n){
+    case 0:// 1st frame
+        m_baStat.clear();
+        m_baStat.append((char)0x0);
+        m_baStat.append((char)0x0);//len
+
+        m_baStat.append((char)0x35);// fix
+        m_baStat.append((char)0x01);// fix
+
+        // byte 5 base1
+        m_baStat.append((char)0x55);// req number
+
+        // byte 6 can.ok.number
+        m_baStat.append((char)0xaa);// ok.number
+        m_baStat.append((char)0x0);// err.number
+        // byte 8 base1
+        m_baStat.append((char)0x5a);// lastest cmd.code
+
+        break;
+    case 1:
+        // byte 1 base1
+        b8 = 0x0;// stat.32
+        m_baStat.append(b8);//
+
+        // byte 2
+        b8 = 0x0; // stat.arm
+        m_baStat.append(b8);
+
+        // byte 3
+        b8 = 0x0;// stat.app
+        m_baStat.append(b8);
+
+        m_lenStatAdd=0;
+
+        for(i=0;i<4;i++){
+            if(m_baStatFile.size()>m_lenStatAdd){
+                b8 = m_baStatFile.at(m_lenStatAdd);
+                m_baStat.append(b8);
+                m_lenStatAdd++;
+            }
+            else{
+
+                b8 = 0x20;
+                m_baStat.append(b8);
+            }
+        }
+        if(m_baStatFile.size()>m_lenStatAdd){
+            b8 = m_baStatFile.at(m_lenStatAdd);
+            m_baStat.append(b8);
+            m_lenStatAdd++;
+        }
+        else{
+            len = m_baStat.size()-2;
+            qDebug(" m_baStat.len :%d     size: %d",len, m_baStat.size());
+            bsum = 0;
+            for(i=0;i<len;i++) bsum+=m_baStat.at(2+i);
+            m_baStat.append(bsum);
+            b8 = len>>8;
+            m_baStat.replace(0,1,&b8,1);
+            b8 = len;
+            m_baStat.replace(1,1,&b8,1);
+        }
+        ret = m_lenStatAdd;
+        break;
+    default:
+        for(i=0;i<7;i++){
+            if(m_baStatFile.size()>m_lenStatAdd){
+                b8 = m_baStatFile.at(m_lenStatAdd);
+                m_baStat.append(b8);
+                m_lenStatAdd++;
+            }
+            else {
+                b8 = 0x20;
+                m_baStat.append(b8);
+            }
+        }
+        if(m_baStatFile.size()>m_lenStatAdd){
+            b8 = m_baStatFile.at(m_lenStatAdd);
+            m_baStat.append(b8);
+            m_lenStatAdd++;
+        }
+        else{
+            len = m_baStat.size()-2;
+            qDebug(" m_baStat.len :%d     size: %d",len, m_baStat.size());
+            bsum = 0;
+            for(i=0;i<len;i++) bsum+=m_baStat.at(2+i);
+            m_baStat.append(bsum);
+            b8 = len>>8;
+            m_baStat.replace(0,1,&b8,1);
+            b8 = len;
+            m_baStat.replace(1,1,&b8,1);
+        }
+        ret = m_lenStatAdd;
+        break;
+    }
+
+
+    //qDebug("  mkBAStat m_baStat.size %d", m_baStat.size());
+    return ret;
+}
+
+// set m_baStat
+int ThreadUdpR::mkBAStat()
+{
+    int ret=0;
+    int n;
+    getBAStatFile();
+
+    m_sumStat=0;
+    mkBAStatN(0);
+    mkBAStatN(1);
+    //mkBAStatN(2);
+    if(m_baStatFile.size() <= m_lenStatAdd){
+        return 1;// finish
+    }
+    for(n=2;;n++){
+        mkBAStatN(n);
+        if(m_lenStatAdd>=m_baStatFile.size()){
+            ret = 1;
+            break;
+        }
+
+    }
+    return ret;
+}
+int ThreadUdpR::mkBAStatUartN(int n)
+{
+    int ret=0;
+    int i;
+    int id32;
+    QByteArray ba16;
+    char b8,bsum;
+#if 0
+    for(i=0;i<8;i++){
+        qDebug(" %02x ",m_baStat.at((n<<3)+i));
+    }
+    qDebug(" -- ");
+#endif
+    switch(n){
+    case 0:// 1st frame
+        bsum=0;
+        ba16.clear();
+
+        b8=0xaa;
+        bsum+=b8;
+        ba16.append(b8);
+
+        b8=0x55;
+        ba16.append(b8);
+        bsum+=b8;
+
+        id32=getID32(0x25,0,2,0,0);
+        b8= id32;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8= id32>>8;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id32>>16;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id32>>24;
+        ba16.append(b8);
+        bsum+=b8;
+
+        for(i=0;i<8;i++){
+            b8=m_baStat.at(i);
+            ba16.append(b8);
+            bsum+=b8;
+        }
+        ba16.append(bsum);
+
+        b8=0x88;
+        ba16.append(b8);
+
+        sigUart(ba16);
+
+        break;
+    default:
+        bsum=0;
+        ba16.clear();
+
+        b8=0xaa;
+        bsum+=b8;
+        ba16.append(b8);
+
+        b8=0x55;
+        ba16.append(b8);
+        bsum+=b8;
+
+        id32=getID32(0x25,0,3,0,0);
+        b8= id32;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8= id32>>8;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id32>>16;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id32>>24;
+        ba16.append(b8);
+        bsum+=b8;
+
+        for(i=0;i<8;i++){
+            b8=m_baStat.at((n<<3)+i);
+            ba16.append(b8);
+            bsum+=b8;
+        }
+        ba16.append(bsum);
+
+        b8=0x88;
+        ba16.append(b8);
+
+        sigUart(ba16);
+
+        break;
+    }
+
+    return ret;
+}
+
+int ThreadUdpR::mkBAStatUart()
+{
+    int ret=0;
+    int len;
+    int i,n;
+
+    len = m_baStat.size();
+    n=len>>3;
+
+    for(i=0;i<n;i++)mkBAStatUartN(i);
+
+    return ret;
+}
+
+// sttatus report
 void ThreadUdpR::doRemote()
 {
+    // make frame.status
+    mkBAStat();
+    mkBAStatUart();
+
 
 }
 void ThreadUdpR::doShort5()
@@ -95,20 +376,25 @@ void ThreadUdpR::doTimeSync()
 {
 
 }
-
+// req.stat b28-21 src   b20-b13.des   b12-b9 type     b8 info   b7-b0 ID
+//      000     0000.0000      0010.0101     0001            0          0000
+//                                        single
+//      0x00          0x04           a2                                 0x00
 void ThreadUdpR::parseID32type()
 {
     switch(m_stFrame.type){
     case 0:// restore frame    do nothing                 feng....can.c=>parse_can_packet()
         break;
     case 1:// cmd.single frame
-        doSingle();
+        if(m_stFrame.des==0x25)doSingle();
         break;
     case 2:// cmd.complex frame 1st
-        do1st();
+        if(m_stFrame.des==0x25)
+            do1st();
         break;
     case 3:// cmd.complex frame continue
-        do2nd();
+        if(m_stFrame.des==0x25)
+            do2nd();
         break;
     case 4:// time sync frame
         doTimeSync();
@@ -121,11 +407,13 @@ void ThreadUdpR::parseID32type()
 void ThreadUdpR::toStFrame(QByteArray ba, st_frame *pStFrame)
 {
 #if false
+    // normail id32
     pStFrame->id32 = ((0x0ff&ba.at(2))<<24)
             | ((0x0ff & ba.at(3))<<16)
             | ((0x0ff & ba.at(4))<<8)
             | (0x0ff & ba.at(5));
 #else
+    // uart id32 ,
     pStFrame->id32 = ((0x0ff&ba.at(5))<<24)
             | ((0x0ff & ba.at(4))<<16)
             | ((0x0ff & ba.at(3))<<8)
@@ -207,6 +495,7 @@ void ThreadUdpR::print16()
 
 void ThreadUdpR::newChar(char ch)
 {
+    //qDebug(" newchar 1byte");
     m_q.enqueue(ch);
     //emit sigTest();
 

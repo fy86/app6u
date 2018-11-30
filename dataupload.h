@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QByteArray>
+#include <QFile>
+#include <QIODevice>
 
 #include "mydef.h"
 #include "crc32.h"
@@ -12,6 +14,13 @@ class dataUpload : public QObject
     Q_OBJECT
 public:
     explicit dataUpload(QObject *parent = 0);
+
+    void echoStartOK(bool bOK);
+    int getID32(int src2821,int des2013,int type1209, int info8 ,int id71);
+
+    bool m_bStartOK;
+    bool m_isArm;
+    QString m_strFN;
 
     crc32 m_crc32;
 
@@ -29,6 +38,7 @@ public:
     int m_nDataType;
     int m_nDataSn;
     QByteArray m_baData;
+    QByteArray m_baFile;
     int m_nRcv;
     bool m_bSum;
     int m_nSumCal;
@@ -46,6 +56,7 @@ public:
     void printBA(QByteArray ba);
 
 signals:
+    void sigUart(QByteArray);
 
 public slots:
 

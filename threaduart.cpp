@@ -119,6 +119,12 @@ void threaduart::slotSendTest()
 }
 void threaduart::slotSend(QByteArray ba)
 {
+    int i;
+    for(i=0;i<ba.size();i++){
+        qDebug(" slot.uart.send : %02X ",ba.at(i));
+    }
+    qDebug(" -- slot.uart.send --");
+
     if(!m_isArm)return;
     if(ba.size()<1)return;
     write(fd,ba.data(),ba.size());
@@ -141,7 +147,9 @@ void threaduart::run()
             for(i=0;i<len;i++){
                 emit newChar(m_buf[i]);
             }
-            QTimer::singleShot(1000,this,SLOT(slotSendTest()));
+
+            //QTimer::singleShot(1000,this,SLOT(slotSendTest()));
+
             //m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7755);
             //m_pusSend->writeDatagram(buf,len,QHostAddress::LocalHost,7756);
             //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7755);

@@ -18,8 +18,22 @@ class ThreadUdpR : public QThread
 public:
     explicit ThreadUdpR(QObject *parent = 0);
 
+    int getBAStatFile();
+    int mkBAStat();
+    int mkBAStatUart();
+    int mkBAStatUartN(int n);
+    int mkBAStatN(int n);
+    int m_sumStat;
+    int m_lenStatAdd;
+
+    QByteArray m_baStat;// no id32 header
+    QByteArray m_baStatUart;
+    QByteArray m_baStatFile;
+
     QWaitCondition m_wait;
     QMutex m_mutex;
+
+    int getID32(int src2821,int des2013,int type1209, int info8 ,int id71);
 
     dataUpload m_dataUpload;
 
@@ -60,6 +74,7 @@ signals:
     void sigF16(QByteArray);
     void sigSTDframe(QByteArray);
     void sigTest();
+    void sigUart(QByteArray);
 
 public slots:
     void newChar(char ch);
