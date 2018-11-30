@@ -5,6 +5,8 @@
 #include <QThread>
 #include <QUdpSocket>
 #include <QTimer>
+#include <QQueue>
+
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,6 +15,7 @@
 #include <stdio.h>
 
 #include "mydef.h"
+#include "mylib.h"
 
 
 class threaduart : public QThread
@@ -20,6 +23,8 @@ class threaduart : public QThread
     Q_OBJECT
 public:
     explicit threaduart(QObject *parent = 0);
+
+    myLib m_lib;
 
     void init();
     int sumChar(char *p,int len);
@@ -34,7 +39,7 @@ public:
     struct termios oldtio,newtio;
     char m_buf[255];
 
-
+    QQueue<QByteArray> m_q;
 
 
 protected:
@@ -42,11 +47,14 @@ protected:
 
 signals:
     void newChar(char ch);
+    void sigWakeSend();
 
 public slots:
     void readData();
     void slotSendTest();
     void slotSend(QByteArray ba);
+    void slotEnQ(QByteArray ba);
+    void slotSendQ();
 
 };
 

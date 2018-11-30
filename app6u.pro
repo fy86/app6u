@@ -23,7 +23,9 @@ SOURCES += main.cpp \
     buffer16.cpp \
     dataupload.cpp \
     crc32.cpp \
-    threaduart.cpp
+    threaduart.cpp \
+    threaduartsend.cpp \
+    mylib.cpp
 
 HEADERS += \
     udpserver.h \
@@ -33,4 +35,6 @@ HEADERS += \
     buffer16.h \
     dataupload.h \
     crc32.h \
-    threaduart.h
+    threaduart.h \
+    threaduartsend.h \
+    mylib.h

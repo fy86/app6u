@@ -6,6 +6,7 @@
 #include "udpserver.h"
 #include "frameparser.h"
 #include "threaduart.h"
+#include "threaduartsend.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +18,7 @@ int main(int argc, char *argv[])
     frameparser parser;
 
     threaduart thuart;
+    threadUartSend thuartSend;
 
     QObject::connect(&thudpr,SIGNAL(finished()),&a,SLOT(quit()));
     QObject::connect(&us,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
@@ -25,10 +27,15 @@ int main(int argc, char *argv[])
 
     //QObject::connect(&thudpr,SIGNAL(sigTest()),&thuart,SLOT(slotSendTest()));
 
-    QObject::connect(&thudpr,SIGNAL(sigUart(QByteArray)),&thuart,SLOT(slotSend(QByteArray)));
+    // enqueue
+    QObject::connect(&thudpr,SIGNAL(sigUart(QByteArray)),&thuart,SLOT(slotEnQ(QByteArray)));
+
+    QObject::connect(&thuartSend,SIGNAL(sigQSend()),&thuart,SLOT(slotSendQ()));
+    QObject::connect(&thuart,SIGNAL(sigWakeSend()),&thuartSend,SLOT(slotWakeSend()));
 
     thuart.start();
     thudpr.start();
+    thuartSend.start();
 
     qDebug("app6u start");
 

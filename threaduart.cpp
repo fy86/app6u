@@ -117,6 +117,12 @@ void threaduart::slotSendTest()
     write(fd,ba.data(),16);
     qDebug("  uart.slot.send.test   sum:%02x",sum);
 }
+void threaduart::slotEnQ(QByteArray ba)
+{
+    m_q.enqueue(ba);
+    emit sigWakeSend();
+}
+
 void threaduart::slotSend(QByteArray ba)
 {
     int i;
@@ -129,6 +135,19 @@ void threaduart::slotSend(QByteArray ba)
     if(ba.size()<1)return;
     write(fd,ba.data(),ba.size());
 
+}
+void threaduart::slotSendQ()
+{
+    QByteArray ba;
+
+    if(m_q.isEmpty()) return;
+    ba=m_q.dequeue();
+
+    m_lib.printBA("ba.to.send",ba);
+
+    if(!m_isArm)return;
+    if(ba.size()<1)return;
+    write(fd,ba.data(),ba.size());
 }
 
 void threaduart::run()
