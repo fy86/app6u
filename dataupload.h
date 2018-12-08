@@ -8,12 +8,15 @@
 
 #include "mydef.h"
 #include "crc32.h"
+#include "myfiles.h"
 
 class dataUpload : public QObject
 {
     Q_OBJECT
 public:
     explicit dataUpload(QObject *parent = 0);
+
+    myfiles m_myfiles;
 
     void echoStartOK(bool bOK);
     int getID32(int src2821,int des2013,int type1209, int info8 ,int id71);

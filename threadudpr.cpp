@@ -4,6 +4,8 @@ ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
     m_isArm=QFile::exists(QString("/dev/ttymxc2"));
+
+    m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
 }
 
 void ThreadUdpR::run()
@@ -371,8 +373,6 @@ void ThreadUdpR::do1st()
 void ThreadUdpR::do2nd()
 {
     m_dataUpload.setData2(m_stFrame);
-    m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
-
 }
 
 #define SECS_5 5
@@ -433,14 +433,15 @@ void ThreadUdpR::parseID32type()
     case 0:// restore frame    do nothing                 feng....can.c=>parse_can_packet()
         break;
     case 1:// cmd.single frame
-        if(m_stFrame.des==0x25)doSingle();
+        //if(m_stFrame.des==0x25)
+            doSingle();
         break;
     case 2:// cmd.complex frame 1st
-        if(m_stFrame.des==0x25)
+        //if(m_stFrame.des==0x25)
             do1st();
         break;
     case 3:// cmd.complex frame continue
-        if(m_stFrame.des==0x25)
+        //if(m_stFrame.des==0x25)
             do2nd();
         break;
     case 4:// time sync frame
@@ -475,10 +476,14 @@ void ThreadUdpR::toStFrame(QByteArray ba, st_frame *pStFrame)
     pStFrame->des = 0x0ff & (pStFrame->id32 >>13 );
     pStFrame->src = 0x0ff & (pStFrame->id32 >>21 );
 
-    qDebug("id32:%08x id:%02x  info:%02x type:%02x  des:%02x src:%02x",
-           pStFrame->id32,pStFrame->id,
-           pStFrame->info,pStFrame->type,
-           pStFrame->des,pStFrame->src);
+    syslog(LOG_INFO,"  id32:%08x src8:%02x des8:%02x type4:%01x info1:%01x id8:%02x",
+           pStFrame->id32,
+           pStFrame->src,
+           pStFrame->des,
+           pStFrame->type,
+           pStFrame->info,
+           pStFrame->id
+           );
 
 }
 // feng.check_packet()
@@ -524,7 +529,7 @@ void ThreadUdpR::print16ba()
         str1.sprintf(" %02x",0x0ff & m_ba16.at(i));
         str+=str1;
     }
-    qDebug(" str. valid frame16: %s",str.toLatin1().data());
+    syslog(LOG_INFO," --%s-- validFrame16: %s",Q_FUNC_INFO,str.toLatin1().data());
 }
 
 void ThreadUdpR::print16()

@@ -156,6 +156,11 @@ void dataUpload::init()
     qDebug("  numPkt:%d   version:0x%02x  fileID: 0x%02x",m_numPkt,m_nVersion,m_fileID);
     qDebug(" file.name: %s",m_baData.data()+4);
 
+    QDir d(QString(m_baData.data()+4));
+    syslog(LOG_INFO," dataupload   filename.full: %s   filename: %s",
+           d.path().toLatin1().data(),
+           d.dirName().toLatin1().data());
+
     if(m_isArm) m_strFN=QString(m_baData.data()+4);
     else m_strFN = QString("/home/c/tmp/save6u.bin");
     qDebug("  save.filename: %s" , m_strFN.toLatin1().data());
@@ -193,7 +198,7 @@ void dataUpload::doC7()
         ba=m_baData.mid(len-1024-4,1024);
     }
     else return;
-    qDebug(" file.txt : %s",ba.data());
+    //syslog(LOG_INFO," file.txt : %s",ba.data());
 
     start = (0x0ff & m_baData.at(6))<<24;
     start |= (0x0ff & m_baData.at(7))<<16;
@@ -206,7 +211,7 @@ void dataUpload::doC7()
     end |= 0x0ff & m_baData.at(13);
 
     lenWrite=end-start;
-    qDebug("  doC7 offfset.start: %08x   end:%08x  len: %d",start,end,lenWrite);
+    syslog(LOG_INFO,"  doC7 offfset.start: %08x   end:%08x  len: %d",start,end,lenWrite);
 
     QFile file(m_strFN);
     if(file.exists()){
@@ -229,7 +234,7 @@ void dataUpload::doC7()
             | ((0x0ff & m_baData[len-3])<<16)
             | ((0x0ff & m_baData[len-2])<<8)
             | (0x0ff & m_baData[len-1]);
-    qDebug("crc32 : %08x     cal: %08x",crc32, crc32cal);
+    syslog(LOG_INFO,"crc32 : %08x     cal: %08x",crc32, crc32cal);
 
 
 }
@@ -242,7 +247,7 @@ void dataUpload::printBA(QByteArray ba)
         str1.sprintf(" %02x",0x0ff & ba.at(i));
         str.append(str1);
     }
-    qDebug(" len:%d  :: %s",len,str.toLatin1().data());
+    syslog(LOG_INFO," -- fileFrameBin len:%d  :: %s",len,str.toLatin1().data());
 
 }
 
