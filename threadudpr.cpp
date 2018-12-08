@@ -3,6 +3,7 @@
 ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
+    m_isArm=QFile::exists(QString("/dev/ttymxc2"));
 }
 
 void ThreadUdpR::run()
@@ -370,10 +371,56 @@ void ThreadUdpR::do1st()
 void ThreadUdpR::do2nd()
 {
     m_dataUpload.setData2(m_stFrame);
+    m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
 
 }
+
+#define SECS_5 5
+#define SECS_120 30
+//#define SECS_120 120
 void ThreadUdpR::doTimeSync()
 {
+    QDateTime dt,dtNow;
+    struct timeval tv;
+
+    //syslog(LOG_INFO," func doTimeSync ");
+
+    //char buf[100];
+    char b80=0x50;
+    char b81=0x05;
+    unsigned int tn,th;
+    char *p8;
+    int i;
+
+    if(b80!=m_stFrame.buf[0] || b81 != m_stFrame.buf[1]) return;
+    p8=(char*)&tn;
+    for(i=0;i<4;i++)p8[i]=m_stFrame.buf[2+i];
+    th=ntohl(tn);
+    dt.setTime_t(th);
+    //::snprintf(buf,90," ntohl  tn:%08x th:%08x",tn,th);
+    //syslog(LOG_INFO,"%s",buf);
+
+    if(!m_isArm){
+        syslog(LOG_INFO," ntohl  tn:%08x th:%08x  %d-%d-%d %d:%d:%d",tn,th,
+               dt.date().year(),dt.date().month(),dt.date().day(),
+               dt.time().hour(),dt.time().minute(),dt.time().second());
+        return;
+    }
+    dtNow = QDateTime::currentDateTime();
+    if(dt>dtNow.addSecs(SECS_5)
+            || dt<dtNow.addSecs(-SECS_5)
+            || dt>m_dtSet.addSecs(SECS_120)
+            || dt<m_dtSet.addSecs(-SECS_120)){
+        tv.tv_sec=th;
+        tv.tv_usec = 0;
+        settimeofday(&tv,NULL);
+
+        m_dtSet = dt;
+
+        syslog(LOG_INFO,"doTimeSync ntohl  tn:%08x th:%08x  %d-%d-%d %d:%d:%d",tn,th,
+               dt.date().year(),dt.date().month(),dt.date().day(),
+               dt.time().hour(),dt.time().minute(),dt.time().second());
+    }
 
 }
 // req.stat b28-21 src   b20-b13.des   b12-b9 type     b8 info   b7-b0 ID

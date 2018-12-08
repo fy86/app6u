@@ -2,6 +2,10 @@
 
 #include <QDebug>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+
 #include "threadudpr.h"
 #include "udpserver.h"
 #include "frameparser.h"
@@ -37,7 +41,8 @@ int main(int argc, char *argv[])
     thudpr.start();
     thuartSend.start();
 
-    qDebug("app6u start");
+    //qDebug("app6u start");
+    syslog(LOG_INFO," ------ app6u start ------");
 
     // !!!!!!! will block udp recv
     //thudpr.wait();

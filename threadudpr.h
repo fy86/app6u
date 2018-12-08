@@ -6,6 +6,13 @@
 #include <QQueue>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QDateTime>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
 
 #include "mydef.h"
 #include "frameparser.h"
@@ -17,6 +24,9 @@ class ThreadUdpR : public QThread
     Q_OBJECT
 public:
     explicit ThreadUdpR(QObject *parent = 0);
+
+    bool m_isArm;
+    QDateTime m_dtSet;
 
     int getBAStatFile();
     int mkBAStat();
