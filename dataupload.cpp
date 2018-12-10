@@ -36,13 +36,13 @@ int dataUpload::getID32(int src2821, int des2013, int type1209, int info8, int i
     id32 |= (0x01 & info8)<<8;
     id32 |= 0x0ff & id71;
 
-    qDebug(" getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+    syslog(LOG_INFO," getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
 
     return id32;
 
 }
 
-void dataUpload::echoStartOK(bool bOK)
+void dataUpload::echoStartOK(bool bOK,char id8)
 {
     int id32;
     char b8,bsum,byteOK;
@@ -81,7 +81,7 @@ void dataUpload::echoStartOK(bool bOK)
         bsum+=b8;
 
         // byte 1 , base 1
-        b8=0x99;
+        b8=0x99;//////////////////////////////////
         ba16.append(b8);
         bsum+=b8;
 
@@ -93,7 +93,7 @@ void dataUpload::echoStartOK(bool bOK)
         ba16.append(b8);
         bsum+=b8;
 
-        b8=0x01;// fixme
+        b8=id8;////////////////////////////////////// fixme
         ba16.append(b8);
         bsum+=b8;
 
@@ -109,7 +109,88 @@ void dataUpload::echoStartOK(bool bOK)
         ba16.append(b8);
         bsum+=b8;
 
+        b8=0x99;////////////////////////////// 99
+        ba16.append(b8);
+        bsum+=b8;
+
+        ba16.append(bsum);
+
+        b8=0x88;
+        ba16.append(b8);
+
+        sigUart(ba16);
+
+
+
+}
+void dataUpload::echoC7(bool bOK,char id8)
+{
+    int id32;
+    char b8,bsum,byteOK;
+    QByteArray ba16;
+    if(bOK){
+        byteOK = 0x0ff;
+    }
+    else byteOK = 0x55;
+
+        bsum=0;
+        ba16.clear();
+
         b8=0xaa;
+        bsum+=b8;
+        ba16.append(b8);
+
+        b8=0x55;
+        ba16.append(b8);
+        bsum+=b8;
+
+        id32=getID32(0x25,0,1,0,0);
+        b8= id32;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8= id32>>8;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id32>>16;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id32>>24;
+        ba16.append(b8);
+        bsum+=b8;
+
+        // byte 1 , base 1
+        b8=0x98;///////////////// 98 98 98 98
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=byteOK;////////////////////// byteOK
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=0x02;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=id8;////////////////////////////////////// fixme
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=0xaa;//
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=0xaa;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=0xaa;
+        ba16.append(b8);
+        bsum+=b8;
+
+        b8=0x97;/////        97 97 97
         ba16.append(b8);
         bsum+=b8;
 
@@ -124,16 +205,22 @@ void dataUpload::echoStartOK(bool bOK)
 
 }
 
+
 // handle upload.start 1st frame.complex
 void dataUpload::init()
 {
     int sum=0;
     int len1=m_baData.size()-1;
+    char id8;
 
     m_bInit = false;
-    if(0x51 != m_nDataSn) return;// not fs system
+    if(0x51 != m_nOStype){
+        syslog(LOG_INFO," filesystem type error(!=0x51) : %02x",m_nDataSn);
+        return;// not fs system
+    }
     m_nVersion = 0x0ff & m_baData.at(2);
     m_fileID = 0x0ff & m_baData.at(3);
+    id8=m_baData.at(3);
     m_numPkt = ((0x0ff & m_baData.at(len1-3))<<16)
             | ((0x0ff & m_baData.at(len1-2))<<8)
             | (0x0ff & m_baData.at(len1-1));// big endian 24b
@@ -147,12 +234,12 @@ void dataUpload::init()
     qDebug("upload.start(init) sum.cal: 0x%02x   sum: 0x%02x",sum,0x0ff & m_baData.at(len1));
     if( (0x0ff & sum)!=(0x0ff & m_baData.at(len1))){
         m_bStartOK=false;
-        echoStartOK(m_bStartOK);
+        echoStartOK(m_bStartOK,id8);
 
         return;
     }
     m_bStartOK=true;
-    echoStartOK(m_bStartOK);
+    echoStartOK(m_bStartOK,id8);
     qDebug("  numPkt:%d   version:0x%02x  fileID: 0x%02x",m_numPkt,m_nVersion,m_fileID);
     qDebug(" file.name: %s",m_baData.data()+4);
 
@@ -169,13 +256,13 @@ void dataUpload::init()
 /// parse frame.complex  ??????
 void dataUpload::parseBA()
 {
-    qDebug("parse complex.frame");
+    syslog(LOG_INFO,"parse complex.frame");
     switch(m_nDataType){
     case CMD_UPLOAD_INIT:// 0xc6
         init();
         break;
     case CMD_UPLOAD_DATA:// 0xc7
-        qDebug("     ****** file data frame.complex ");
+        //qDebug("     ****** file data frame.complex ");
         doC7();
         break;
     default:
@@ -189,8 +276,13 @@ void dataUpload::doC7()
     int i;
     int start,end;
     QByteArray ba;
+    char id8;
 
-    qDebug(" doC7 baData.len: %d",len);
+    syslog(LOG_INFO," doC7 baData.len: %d   m_baData.at0:%02x at1:%02x at2:%02x",
+                     len,
+                     0x0ff & m_baData.at(0),
+                     0x0ff & m_baData.at(1),
+                     0x0ff & m_baData.at(2));
     if(len>4096){
         ba=m_baData.mid(len-4096-4,4096);
     }
@@ -199,6 +291,8 @@ void dataUpload::doC7()
     }
     else return;
     //syslog(LOG_INFO," file.txt : %s",ba.data());
+
+    id8=m_baData.at(2);//  at3.4.5 pkt.No.
 
     start = (0x0ff & m_baData.at(6))<<24;
     start |= (0x0ff & m_baData.at(7))<<16;
@@ -212,6 +306,20 @@ void dataUpload::doC7()
 
     lenWrite=end-start;
     syslog(LOG_INFO,"  doC7 offfset.start: %08x   end:%08x  len: %d",start,end,lenWrite);
+
+    unsigned int crc32cal=m_crc32.csp_crc32_memory((unsigned char*)(m_baData.data()),len-4);
+    unsigned int crc32 = ((0x0ff&m_baData[len-4])<<24)
+            | ((0x0ff & m_baData[len-3])<<16)
+            | ((0x0ff & m_baData[len-2])<<8)
+            | (0x0ff & m_baData[len-1]);
+    syslog(LOG_INFO,"crc32 : %08x     cal: %08x",crc32, crc32cal);
+
+    if(crc32cal!=crc32){
+        echoC7(false,id8);
+        return;
+    }
+    echoC7(true,id8);
+
 
     QFile file(m_strFN);
     if(file.exists()){
@@ -228,13 +336,6 @@ void dataUpload::doC7()
         }
 
     }
-
-    unsigned int crc32cal=m_crc32.csp_crc32_memory((unsigned char*)(m_baData.data()),len-4);
-    unsigned int crc32 = ((0x0ff&m_baData[len-4])<<24)
-            | ((0x0ff & m_baData[len-3])<<16)
-            | ((0x0ff & m_baData[len-2])<<8)
-            | (0x0ff & m_baData[len-1]);
-    syslog(LOG_INFO,"crc32 : %08x     cal: %08x",crc32, crc32cal);
 
 
 }
@@ -272,10 +373,24 @@ void dataUpload::addChar(char ch)
 
 void dataUpload::setData1(st_frame st)
 {
+    char bC6=0xc6;
+    char bC7=0xc7;
     m_nLen24 = ((0x0ff & st.buf[0])<<8) + (0x0ff & st.buf[1]);
     m_nLen4 = m_nLen24-2;
-    m_nDataType = 0x0ff & st.buf[2];
-    m_nDataSn = 0x0ff & st.buf[3];
+    // buf[2] : 0xc6 , 0xc7
+    m_nDataType= 0x0ff & st.buf[2];// c6 c7
+    if(bC6==st.buf[2]){
+        m_nOStype = 0x0ff & st.buf[3];// 0x51
+        // buf[4] : 0x02 // version No.
+        m_nDataSn = 0x0ff & st.buf[5];
+    }
+    else if( bC7 == st.buf[2]){
+        m_nOStype = 0x51;// no this byte
+        m_nDataSn = 0x0ff & st.buf[4];
+    }
+    else{
+        syslog(LOG_INFO," errerr : 1st frame not C6.C7");
+    }
 
     m_baData.clear();
     m_bSum=false;
@@ -288,7 +403,7 @@ void dataUpload::setData1(st_frame st)
         addChar(st.buf[2+i]);
     }
 
-    qDebug("1st.frame len24:%d  type:%02x sn:%02x",m_nLen24,m_nDataType,m_nDataSn);
+    syslog(LOG_INFO,"1st.frame len24:%d buf2:%02x -- OStype:%02x sn:%02x",m_nLen24,0x0ff & st.buf[2],m_nOStype,m_nDataSn);
 
 }
 

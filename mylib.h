@@ -3,6 +3,10 @@
 
 #include <QObject>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+
 class myLib : public QObject
 {
     Q_OBJECT

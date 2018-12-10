@@ -18,7 +18,8 @@ public:
 
     myfiles m_myfiles;
 
-    void echoStartOK(bool bOK);
+    void echoStartOK(bool bOK,char id8);
+    void echoC7(bool bOK,char id8);
     int getID32(int src2821,int des2013,int type1209, int info8 ,int id71);
 
     bool m_bStartOK;
@@ -39,6 +40,7 @@ public:
     int m_nLen4;// m_nLen24-2
     //int m_nLen241;// m_nlen24+1
     int m_nDataType;
+    int m_nOStype;
     int m_nDataSn;
     QByteArray m_baData;
     QByteArray m_baFile;

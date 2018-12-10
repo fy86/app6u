@@ -6,6 +6,7 @@ ThreadUdpR::ThreadUdpR(QObject *parent) :
     m_isArm=QFile::exists(QString("/dev/ttymxc2"));
 
     m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
+    connect(&m_dataUpload,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
 }
 
 void ThreadUdpR::run()
@@ -55,7 +56,7 @@ int ThreadUdpR::getID32(int src2821, int des2013, int type1209, int info8, int i
     id32 |= (0x01 & info8)<<8;
     id32 |= 0x0ff & id71;
 
-    qDebug(" getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+    syslog(LOG_INFO," getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
 
     return id32;
 }
@@ -230,7 +231,7 @@ int ThreadUdpR::mkBAStatUartN(int n)
         ba16.append(b8);
         bsum+=b8;
 
-        id32=getID32(0x25,0,2,0,0);
+        id32=getID32(MY_CAN_ID,0,2,0,0);
         b8= id32;
         ba16.append(b8);
         bsum+=b8;
@@ -272,7 +273,7 @@ int ThreadUdpR::mkBAStatUartN(int n)
         ba16.append(b8);
         bsum+=b8;
 
-        id32=getID32(0x25,0,3,0,0);
+        id32=getID32(MY_CAN_ID,0,3,0,0);
         b8= id32;
         ba16.append(b8);
         bsum+=b8;
@@ -433,15 +434,15 @@ void ThreadUdpR::parseID32type()
     case 0:// restore frame    do nothing                 feng....can.c=>parse_can_packet()
         break;
     case 1:// cmd.single frame
-        //if(m_stFrame.des==0x25)
+        //if(m_stFrame.des==MY_CAN_ID)
             doSingle();
         break;
     case 2:// cmd.complex frame 1st
-        //if(m_stFrame.des==0x25)
+        //if(m_stFrame.des==MY_CAN_ID)
             do1st();
         break;
     case 3:// cmd.complex frame continue
-        //if(m_stFrame.des==0x25)
+        //if(m_stFrame.des==MY_CAN_ID)
             do2nd();
         break;
     case 4:// time sync frame

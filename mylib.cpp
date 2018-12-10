@@ -29,7 +29,7 @@ void myLib::printBA(char *p,QByteArray ba)
         str1.sprintf(" %02x",0x0ff & ba.at(i));
         str.append(str1);
     }
-    qDebug(" len:%d  :: %s",len,str.toLatin1().data());
+    syslog(LOG_INFO," len:%d  :: %s",len,str.toLatin1().data());
 
 }
 

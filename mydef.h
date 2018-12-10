@@ -1,6 +1,8 @@
 #ifndef MYDEF_H
 #define MYDEF_H
 
+#define MY_CAN_ID 0x25
+
 struct st_frame{
     int id32;
     int len;

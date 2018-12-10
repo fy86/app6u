@@ -143,7 +143,7 @@ void threaduart::slotSendQ()
     if(m_q.isEmpty()) return;
     ba=m_q.dequeue();
 
-    m_lib.printBA("ba.to.send",ba);
+    m_lib.printBA("baToSend",ba);
 
     if(!m_isArm)return;
     if(ba.size()<1)return;
