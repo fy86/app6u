@@ -3,10 +3,19 @@
 ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
+    m_only25 = true;
     m_isArm=QFile::exists(QString("/dev/ttymxc2"));
 
     m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
     connect(&m_dataUpload,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
+}
+
+void ThreadUdpR::setOnly25(bool b)
+{
+    m_only25 = b;
+    emit sigOnly25(b);
+    if(b) syslog(LOG_INFO," ---- !!! only.can.id.25.25.25.25.valid ---");
+    else syslog(LOG_INFO,"  --- !!! all.can.id.valid ---");
 }
 
 void ThreadUdpR::run()
@@ -331,10 +340,26 @@ void ThreadUdpR::doRemote()
 
 
 }
+void ThreadUdpR::do51()
+{
+    switch(0x0ff & m_stFrame.buf[2]){
+    case 0x25:// only addr 0x25 valid
+        setOnly25(true);
+        break;
+    case 0x52:// all address valid
+        setOnly25(false);
+        break;
+    default:
+        break;
+    }
+
+}
+
 void ThreadUdpR::doShort5()
 {
     switch(0x0ff & m_stFrame.buf[1]){
-    case 0x01:// run python app
+    case 0x01:// user define cmd
+        do51();
         break;
     case 0x02:// kill python app
         break;
@@ -424,6 +449,13 @@ void ThreadUdpR::doTimeSync()
     }
 
 }
+bool ThreadUdpR::isID25(int IDdes)
+{
+    if(!m_only25)return true;
+    if(IDdes==MY_CAN_ID)return true;
+    else return false;
+}
+
 // req.stat b28-21 src   b20-b13.des   b12-b9 type     b8 info   b7-b0 ID
 //      000     0000.0000      0010.0101     0001            0          0000
 //                                        single
@@ -434,16 +466,13 @@ void ThreadUdpR::parseID32type()
     case 0:// restore frame    do nothing                 feng....can.c=>parse_can_packet()
         break;
     case 1:// cmd.single frame
-        //if(m_stFrame.des==MY_CAN_ID)
-            doSingle();
+        if(isID25(m_stFrame.des)) doSingle();
         break;
     case 2:// cmd.complex frame 1st
-        //if(m_stFrame.des==MY_CAN_ID)
-            do1st();
+        if(isID25(m_stFrame.des)) do1st();
         break;
     case 3:// cmd.complex frame continue
-        //if(m_stFrame.des==MY_CAN_ID)
-            do2nd();
+        if(isID25(m_stFrame.des)) do2nd();
         break;
     case 4:// time sync frame
         doTimeSync();

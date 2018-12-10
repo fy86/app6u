@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     thuartSend.start();
 
     //qDebug("app6u start");
-    syslog(LOG_INFO," ------ app6u start ------");
+    syslog(LOG_INFO," ------ app6u start ------ %s",QDir::currentPath().toLatin1().data());
 
     // !!!!!!! will block udp recv
     //thudpr.wait();

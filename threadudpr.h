@@ -25,6 +25,9 @@ class ThreadUdpR : public QThread
 public:
     explicit ThreadUdpR(QObject *parent = 0);
 
+    bool m_only25;
+    void setOnly25(bool b);
+    bool isID25(int IDdes);
     bool m_isArm;
     QDateTime m_dtSet;
 
@@ -77,6 +80,8 @@ public:
     void doRemote();
     void doShort5();
 
+    void do51();
+
 protected:
     void run();
 
@@ -85,6 +90,7 @@ signals:
     void sigSTDframe(QByteArray);
     void sigTest();
     void sigUart(QByteArray);
+    void sigOnly25(bool);
 
 public slots:
     void newChar(char ch);
