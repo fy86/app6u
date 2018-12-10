@@ -18,6 +18,7 @@
 #include "frameparser.h"
 #include "buffer16.h"
 #include "dataupload.h"
+#include "cmdftp.h"
 
 class ThreadUdpR : public QThread
 {
@@ -25,6 +26,7 @@ class ThreadUdpR : public QThread
 public:
     explicit ThreadUdpR(QObject *parent = 0);
 
+    int m_nCmd1st;
     bool m_only25;
     void setOnly25(bool b);
     bool isID25(int IDdes);
@@ -49,6 +51,7 @@ public:
     int getID32(int src2821,int des2013,int type1209, int info8 ,int id71);
 
     dataUpload m_dataUpload;
+    cmdftp m_ftp;
 
     QQueue<char> m_q;
     void testNewFrame();

@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QIODevice>
 
+#include <arpa/inet.h>
+
 #include "mydef.h"
 #include "crc32.h"
 #include "myfiles.h"
@@ -15,6 +17,8 @@ class dataUpload : public QObject
     Q_OBJECT
 public:
     explicit dataUpload(QObject *parent = 0);
+
+    int m_nCmd1st;
 
     myfiles m_myfiles;
 
@@ -49,13 +53,14 @@ public:
     int m_nSumCal;
 
     void setup(struct st_frame st);
-    void setData1(struct st_frame st);
+    virtual void setData1(struct st_frame st);
     void setData2(struct st_frame st);
     void addChar(char ch);
 
-    void parseBA();
+    virtual void parseBA();
     void init();
     void doC7();// file data
+    virtual void doFtp();
 
 
     void printBA(QByteArray ba);

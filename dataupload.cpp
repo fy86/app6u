@@ -3,6 +3,7 @@
 dataUpload::dataUpload(QObject *parent) :
     QObject(parent)
 {
+    m_nCmd1st = 0;
     m_bInit = false;
     m_nLen24 = 0;
     m_bStartOK=false;
@@ -10,6 +11,7 @@ dataUpload::dataUpload(QObject *parent) :
     m_isArm=QFile::exists(QString("/dev/ttymxc2"));
 }
 // single.frame upload.start(init)
+/// removed
 void dataUpload::setup(st_frame st)
 {
     m_bInit = false;
@@ -265,10 +267,18 @@ void dataUpload::parseBA()
         //qDebug("     ****** file data frame.complex ");
         doC7();
         break;
+    case CMD_FTP:
+        doFtp();
+        break;
     default:
         break;
     }
 }
+void dataUpload::doFtp()
+{
+
+}
+
 void dataUpload::doC7()
 {
     int len=m_baData.size();
@@ -348,7 +358,7 @@ void dataUpload::printBA(QByteArray ba)
         str1.sprintf(" %02x",0x0ff & ba.at(i));
         str.append(str1);
     }
-    syslog(LOG_INFO," -- fileFrameBin len:%d  :: %s",len,str.toLatin1().data());
+    syslog(LOG_INFO," -- complex.FrameBin len:%d  :: %s",len,str.toLatin1().data());
 
 }
 
@@ -359,9 +369,12 @@ void dataUpload::addChar(char ch)
         if(m_bSum)return;
         m_bSum=true;
         sum = 0x0ff & ch;
-        qDebug("sum.cal: %02x    sum:%02x",m_nSumCal,sum);
+        syslog(LOG_INFO," complex.frame sum.cal: %02x    sum:%02x",m_nSumCal,sum);
         printBA(m_baData);
-        parseBA();
+        if(m_nSumCal==sum) parseBA();
+        else{
+            syslog(LOG_INFO," complex.frame checksum error !!!!!!!!!!!!!!!!!!!!!! ");
+        }
     }
     else{
         m_baData.append(ch);
@@ -371,6 +384,7 @@ void dataUpload::addChar(char ch)
     }
 }
 
+/// upload cmd
 void dataUpload::setData1(st_frame st)
 {
     char bC6=0xc6;

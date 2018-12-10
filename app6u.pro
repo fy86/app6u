@@ -27,7 +27,8 @@ SOURCES += main.cpp \
     threaduartsend.cpp \
     mylib.cpp \
     myfiles.cpp \
-    myobject.cpp
+    myobject.cpp \
+    cmdftp.cpp
 
 HEADERS += \
     udpserver.h \
@@ -41,4 +42,5 @@ HEADERS += \
     threaduartsend.h \
     mylib.h \
     myfiles.h \
-    myobject.h
+    myobject.h \
+    cmdftp.h

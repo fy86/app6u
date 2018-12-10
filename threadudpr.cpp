@@ -3,11 +3,13 @@
 ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
+    m_nCmd1st = 0;
     m_only25 = true;
     m_isArm=QFile::exists(QString("/dev/ttymxc2"));
 
     m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
     connect(&m_dataUpload,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
+    connect(&m_ftp,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
 }
 
 void ThreadUdpR::setOnly25(bool b)
@@ -381,10 +383,7 @@ void ThreadUdpR::doSingle()
         doShort5();
         break;
     case 0x0c6:// upload file start     user.define
-        m_dataUpload.setup(m_stFrame);
-        break;
-    case 0x99:// just for test
-        qDebug(" reply..upload.start   des:%02x    src:%02x",m_stFrame.des,m_stFrame.src);
+        //m_dataUpload.setup(m_stFrame);
         break;
     default:
         break;
@@ -393,12 +392,37 @@ void ThreadUdpR::doSingle()
 }
 void ThreadUdpR::do1st()
 {
-    m_dataUpload.setData1(m_stFrame);
+    switch(0x0ff & m_stFrame.buf[2]){
+    case 0x0c6:
+        m_nCmd1st = 0x0c6;
+        m_dataUpload.setData1(m_stFrame);
+        break;
+    case 0x0c7:
+        m_nCmd1st = 0x0c7;
+        m_dataUpload.setData1(m_stFrame);
+        break;
+    case 0x0b0:
+        m_nCmd1st = 0x0b0;
+        m_ftp.setData1(m_stFrame);
+        break;
+    default:
+        break;
+    }
 
 }
 void ThreadUdpR::do2nd()
 {
-    m_dataUpload.setData2(m_stFrame);
+    switch(m_nCmd1st){
+    case 0x0c6:
+    case 0x0c7:
+        m_dataUpload.setData2(m_stFrame);
+        break;
+    case 0x0b0:
+        m_ftp.setData2(m_stFrame);
+        break;
+    default:
+        break;
+    }
 }
 
 #define SECS_5 5

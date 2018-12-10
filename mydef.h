@@ -30,6 +30,8 @@ struct st_c7{
 
 #define CMD_UPLOAD_DATA 0x0c7
 
+#define CMD_FTP 0x0b0
+
 #define FRAME_1ST_CHAR 0xaa
 #define FRAME_2ND_CHAR 0x55
 #define FRAME_ENDING_CHAR 0x88
