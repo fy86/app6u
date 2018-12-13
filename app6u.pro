@@ -28,7 +28,9 @@ SOURCES += main.cpp \
     mylib.cpp \
     myfiles.cpp \
     myobject.cpp \
-    cmdftp.cpp
+    cmdftp.cpp \
+    threadftp.cpp \
+    cmddata30.cpp
 
 HEADERS += \
     udpserver.h \
@@ -43,4 +45,6 @@ HEADERS += \
     mylib.h \
     myfiles.h \
     myobject.h \
-    cmdftp.h
+    cmdftp.h \
+    threadftp.h \
+    cmddata30.h
