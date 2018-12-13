@@ -19,6 +19,7 @@ signals:
 
 public slots:
     void readData();
+    void slot7755(QByteArray ba);
 
 };
 

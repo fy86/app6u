@@ -75,10 +75,10 @@ void threaduart::readData()
 
         m_pusRcv->readDatagram(datagram.data(), datagram.size(),&sender, &senderPort);
 
-        for(int i=0;i<datagram.size();i++){
-            qDebug(" thread.uart udp rcv : %02x",0x0ff & datagram.at(i));
+        //for(int i=0;i<datagram.size();i++){
+            //qDebug(" thread.uart udp rcv : %02x",0x0ff & datagram.at(i));
             //emit newChar(datagram.at(i));
-        }
+        //}
     }
 
 }
@@ -143,7 +143,7 @@ void threaduart::slotSendQ()
     if(m_q.isEmpty()) return;
     ba=m_q.dequeue();
 
-    m_lib.printBA("baToSend",ba);
+    m_lib.printBA16("baToSend",ba);
 
     if(!m_isArm)return;
     if(ba.size()<1)return;
@@ -162,7 +162,7 @@ void threaduart::run()
             if(len>14){
                 sum=sumChar(m_buf,14);
             }
-            qDebug(" 2 !!!!!!! can.uart.read %d   sum:0x%02x",len,sum);
+            //syslog(LOG_INFO," thread.uart  can.uart.read %d   sum:0x%02x",len,sum);
             for(i=0;i<len;i++){
                 emit newChar(m_buf[i]);
             }
@@ -175,6 +175,12 @@ void threaduart::run()
             //m_pusSend->writeDatagram(buf,len,QHostAddress("239.255.43.21"),7756);
         }
     }
+
+}
+
+void threaduart::slot7755(QByteArray ba)
+{
+    m_pusSend->writeDatagram(ba.data(),16,QHostAddress("127.0.0.1"),7755);
 
 }
 

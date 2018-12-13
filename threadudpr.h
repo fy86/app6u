@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QDateTime>
+#include <QUdpSocket>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,12 +20,18 @@
 #include "buffer16.h"
 #include "dataupload.h"
 #include "cmdftp.h"
+#include "cmddata30.h"
 
 class ThreadUdpR : public QThread
 {
     Q_OBJECT
 public:
     explicit ThreadUdpR(QObject *parent = 0);
+
+    int m_nRemote;
+    int m_nRemoteOK;
+    int m_nRemoteErr;
+    char m_cmdD3;
 
     int m_nCmd1st;
     bool m_only25;
@@ -52,6 +59,8 @@ public:
 
     dataUpload m_dataUpload;
     cmdftp m_ftp;
+    cmdData30 m_data30;
+
 
     QQueue<char> m_q;
     void testNewFrame();
@@ -84,6 +93,9 @@ public:
     void doShort5();
 
     void do51();
+    void do5140();
+    void do514001();
+    void doFtpAck();
 
 protected:
     void run();
@@ -94,6 +106,11 @@ signals:
     void sigTest();
     void sigUart(QByteArray);
     void sigOnly25(bool);
+    void sig7755(QByteArray);
+    void sigFtp(QByteArray);
+    void sigInt(int);
+    void sigStartThreadFtp();
+    void sigReleaseFtp();
 
 public slots:
     void newChar(char ch);

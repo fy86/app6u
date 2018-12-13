@@ -89,7 +89,8 @@ void cmdftp::mkUart(int n, QByteArray ba8)
         b8=0x88;
         ba16.append(b8);
 
-        sigUart(ba16);
+        //sigUart(ba16);
+        sigFtp(ba16);
 
         break;
     default:
@@ -131,7 +132,8 @@ void cmdftp::mkUart(int n, QByteArray ba8)
         b8=0x88;
         ba16.append(b8);
 
-        sigUart(ba16);
+        //sigUart(ba16);
+        sigFtp(ba16);
 
         break;
     }
@@ -139,7 +141,7 @@ void cmdftp::mkUart(int n, QByteArray ba8)
     //return ret;
 
 }
-
+// start sn=0
 void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
 {
     int i;
@@ -171,7 +173,8 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
     ba42.append(b8);
 
     int h32,n32;
-    char *p32=(char*)n32;
+    char *p32;
+    p32=(char*)&n32;
 
     h32=sn<<9;
     n32=htonl(h32);
@@ -217,6 +220,7 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
     ba.append(bsum);
 
     int n=(ba.size()+7)>>3;
+    sigInt(n);/////////////////////////////////////////
     for(i=0;i<n;i++){
         QByteArray ba8;
         ba8=ba.mid(i<<3,8);
@@ -226,22 +230,35 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
 
 void cmdftp::doDownload()
 {
+    int flen;
     QFile file(QString(m_baFileName.data()));
     if(!file.exists()){
         syslog(LOG_INFO," ftp.file not found");
         return;
     }
-    QByteArray baFile=file.readAll();
-    if(baFile.length()<1){
+    flen=file.size();
+    if(flen<1){
         syslog(LOG_INFO," ftp.file.length==0");
         return;
     }
+
+    if(!file.open(QIODevice::ReadOnly)){
+        syslog(LOG_INFO," ftp download , open file error");
+        return;
+    }
+    QByteArray baFile=file.readAll();
+    if(baFile.length()<1){
+        syslog(LOG_INFO," readall ftp.file.length==0");
+        return;
+    }
+
     int len=baFile.length();
     int nBlock=(len+511)>>9;
     for(int i=0;i<nBlock;i++){
         QByteArray ba512=baFile.mid(i<<9,512);
-        mkFtpFrame(i+1,nBlock,ba512);
+        mkFtpFrame(i,nBlock,ba512);
     }
+    emit sigStartThreadFtp();
 
 }
 
@@ -262,6 +279,7 @@ void cmdftp::doFtp()
         return;
     }
     while(m_baFileName.size()<32) m_baFileName.append(b0);
+    syslog(LOG_INFO," ftp.download.file.name: %s",m_baFileName.data());
 
     doDownload();
 
@@ -347,6 +365,7 @@ void cmdftp::echoFtp(bool bOK)
         b8=0x88;
         ba16.append(b8);
 
+        //////////////
         sigUart(ba16);
 
 

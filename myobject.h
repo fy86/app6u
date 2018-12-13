@@ -15,6 +15,8 @@ class myobject : public QObject
 public:
     explicit myobject(QObject *parent = 0);
 
+    static int snLog;
+
     bool m_isArm;
 
 signals:

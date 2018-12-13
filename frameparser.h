@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <time.h>
+#include <syslog.h>
 
 #include "mydef.h"
 

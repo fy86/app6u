@@ -42,7 +42,7 @@ void buffer16::check16()
             mnLen-=2;
             continue;
         }
-        qDebug("frame16 found");
+        //qDebug("frame16 found");
         n16=LEN16_1 & (mnHead+16);
         mnHead=n16;
         mnLen-=16;

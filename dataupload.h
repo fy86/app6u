@@ -61,6 +61,7 @@ public:
     void init();
     void doC7();// file data
     virtual void doFtp();
+    virtual void doData30();
 
 
     void printBA(QByteArray ba);

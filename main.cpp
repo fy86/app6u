@@ -6,11 +6,15 @@
 #include <stdlib.h>
 #include <syslog.h>
 
+#include "myobject.h"
 #include "threadudpr.h"
 #include "udpserver.h"
 #include "frameparser.h"
 #include "threaduart.h"
 #include "threaduartsend.h"
+#include "threadftp.h"
+
+//int myobject::snLog=0;
 
 int main(int argc, char *argv[])
 {
@@ -23,6 +27,7 @@ int main(int argc, char *argv[])
 
     threaduart thuart;
     threadUartSend thuartSend;
+    threadftp thFtp;
 
     QObject::connect(&thudpr,SIGNAL(finished()),&a,SLOT(quit()));
     QObject::connect(&us,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
@@ -36,6 +41,15 @@ int main(int argc, char *argv[])
 
     QObject::connect(&thuartSend,SIGNAL(sigQSend()),&thuart,SLOT(slotSendQ()));
     QObject::connect(&thuart,SIGNAL(sigWakeSend()),&thuartSend,SLOT(slotWakeSend()));
+
+    QObject::connect(&thudpr,SIGNAL(sigFtp(QByteArray)),&thFtp,SLOT(slotAddBA(QByteArray)));
+    QObject::connect(&thudpr,SIGNAL(sigInt(int)),&thFtp,SLOT(slotAddn(int)));
+    QObject::connect(&thudpr,SIGNAL(sigStartThreadFtp()),&thFtp,SLOT(slotStart()));
+    QObject::connect(&thudpr,SIGNAL(sigReleaseFtp()),&thFtp,SLOT(slotRelease()));
+
+    QObject::connect(&thFtp,SIGNAL(sigUart(QByteArray)),&thuart,SLOT(slotEnQ(QByteArray)));
+
+    //QObject::connect(&thudpr,SIGNAL(sig7755(QByteArray)),&thuart,SLOT(slot7755(QByteArray)));
 
     thuart.start();
     thudpr.start();

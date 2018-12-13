@@ -45,7 +45,7 @@ void frameparser::doTimeSync(st_frame stFrame)
         memcpy(&tn,stFrame.buf+2,4);
         thost=ntohl(tn);
         ptm=localtime(&thost);
-        qDebug("y:%d m:%d d:%d hh:%d mm:%d ss:%d",
+        syslog(LOG_INFO,"y:%d m:%d d:%d hh:%d mm:%d ss:%d",
                ptm->tm_year,ptm->tm_mon,ptm->tm_mday,
                ptm->tm_hour,ptm->tm_min,ptm->tm_sec);
 
@@ -69,7 +69,7 @@ void frameparser::slotTest(QByteArray ba)
         str1.sprintf(" %02x",0x0ff & ba.at(i));
         str+=str1;
     }
-    qDebug("  slot test: frame: %s",str.toLatin1().data());
+    syslog(LOG_INFO,"  slot test: frame: %s",str.toLatin1().data());
 }
 void frameparser::slotParseBA(QByteArray ba)
 {

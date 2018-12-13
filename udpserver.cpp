@@ -54,3 +54,7 @@ void UdpServer::readData()
     }
 
 }
+void UdpServer::slot7755(QByteArray ba)
+{
+
+}

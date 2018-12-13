@@ -233,7 +233,7 @@ void dataUpload::init()
     sum &= 0x0ff;
     m_bInit=true;
 
-    qDebug("upload.start(init) sum.cal: 0x%02x   sum: 0x%02x",sum,0x0ff & m_baData.at(len1));
+    syslog(LOG_INFO,"upload.start(init) sum.cal: 0x%02x   sum: 0x%02x",sum,0x0ff & m_baData.at(len1));
     if( (0x0ff & sum)!=(0x0ff & m_baData.at(len1))){
         m_bStartOK=false;
         echoStartOK(m_bStartOK,id8);
@@ -242,8 +242,8 @@ void dataUpload::init()
     }
     m_bStartOK=true;
     echoStartOK(m_bStartOK,id8);
-    qDebug("  numPkt:%d   version:0x%02x  fileID: 0x%02x",m_numPkt,m_nVersion,m_fileID);
-    qDebug(" file.name: %s",m_baData.data()+4);
+    syslog(LOG_INFO,"  numPkt:%d   version:0x%02x  fileID: 0x%02x",m_numPkt,m_nVersion,m_fileID);
+    syslog(LOG_INFO," file.name: %s",m_baData.data()+4);
 
     QDir d(QString(m_baData.data()+4));
     syslog(LOG_INFO," dataupload   filename.full: %s   filename: %s",
@@ -252,7 +252,7 @@ void dataUpload::init()
 
     if(m_isArm) m_strFN=QString(m_baData.data()+4);
     else m_strFN = QString("/home/c/tmp/save6u.bin");
-    qDebug("  save.filename: %s" , m_strFN.toLatin1().data());
+    syslog(LOG_INFO,"  save.filename: %s" , m_strFN.toLatin1().data());
     QFile::remove(m_strFN);
 }
 /// parse frame.complex  ??????
@@ -270,10 +270,18 @@ void dataUpload::parseBA()
     case CMD_FTP:
         doFtp();
         break;
+    case CMD_DATA30:
+        doData30();
+        break;
     default:
         break;
     }
 }
+void dataUpload::doData30()
+{
+
+}
+
 void dataUpload::doFtp()
 {
 
@@ -354,11 +362,17 @@ void dataUpload::printBA(QByteArray ba)
 {
     QString str,str1;
     int len=ba.size();
+    syslog(LOG_INFO," printBA len24:%d  len.ba:%d",m_nLen24,len);
     for(int i=0;i<len;i++){
         str1.sprintf(" %02x",0x0ff & ba.at(i));
         str.append(str1);
+        if(str.length()>64){
+            syslog(LOG_INFO," printBA %s",str.toLatin1().data());
+            str.resize(0);
+        }
     }
-    syslog(LOG_INFO," -- complex.FrameBin len:%d  :: %s",len,str.toLatin1().data());
+    if(str.length()>0)
+        syslog(LOG_INFO," printBA - %s",str.toLatin1().data());
 
 }
 

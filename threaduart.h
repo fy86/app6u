@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include <syslog.h>
 
 #include "mydef.h"
 #include "mylib.h"
@@ -55,6 +56,8 @@ public slots:
     void slotSend(QByteArray ba);
     void slotEnQ(QByteArray ba);
     void slotSendQ();
+
+    void slot7755(QByteArray ba);
 
 };
 

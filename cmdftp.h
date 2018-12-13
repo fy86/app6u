@@ -24,6 +24,9 @@ public:
     void mkUart(int n,QByteArray ba8);
     void mkUart0(QByteArray ba8);
 signals:
+    void sigFtp(QByteArray);// to thread.ftp
+    void sigInt(int);// to thread.ftp
+    void sigStartThreadFtp();
 
 public slots:
 };

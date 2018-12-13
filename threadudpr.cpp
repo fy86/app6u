@@ -3,13 +3,22 @@
 ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
+    m_nRemote = 0;
+    m_nRemoteOK=0;
+    m_nRemoteErr=0;
+    m_cmdD3 = 1;
+
     m_nCmd1st = 0;
     m_only25 = true;
     m_isArm=QFile::exists(QString("/dev/ttymxc2"));
 
     m_dtSet.setTime_t(QDateTime::currentDateTime().toTime_t());
     connect(&m_dataUpload,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
-    connect(&m_ftp,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
+    //connect(&m_ftp,SIGNAL(sigUart(QByteArray)),this,SIGNAL(sigUart(QByteArray)));
+    connect(&m_ftp,SIGNAL(sigFtp(QByteArray)),this,SIGNAL(sigFtp(QByteArray)));
+    connect(&m_ftp,SIGNAL(sigInt(int)),this,SIGNAL(sigInt(int)));
+    connect(&m_ftp,SIGNAL(sigStartThreadFtp()),this,SIGNAL(sigStartThreadFtp()));
+
 }
 
 void ThreadUdpR::setOnly25(bool b)
@@ -101,13 +110,17 @@ int ThreadUdpR::mkBAStatN(int n)
         m_baStat.append((char)0x01);// fix
 
         // byte 5 base1
-        m_baStat.append((char)0x55);// req number
+        b8 = m_nRemote;
+        m_baStat.append(b8);// req number
 
         // byte 6 can.ok.number
-        m_baStat.append((char)0xaa);// ok.number
-        m_baStat.append((char)0x0);// err.number
+        b8 = m_nRemoteOK;
+        m_baStat.append(b8);// ok.number
+        b8 = m_nRemoteErr;
+        m_baStat.append(b8);// err.number
         // byte 8 base1
-        m_baStat.append((char)0x5a);// lastest cmd.code
+        b8 = m_cmdD3;
+        m_baStat.append(b8);// lastest cmd.code
 
         break;
     case 1:
@@ -144,7 +157,7 @@ int ThreadUdpR::mkBAStatN(int n)
         }
         else{
             len = m_baStat.size()-2;
-            qDebug(" m_baStat.len :%d     size: %d",len, m_baStat.size());
+            //qDebug(" m_baStat.len :%d     size: %d",len, m_baStat.size());
             bsum = 0;
             for(i=0;i<len;i++) bsum+=m_baStat.at(2+i);
             m_baStat.append(bsum);
@@ -174,7 +187,7 @@ int ThreadUdpR::mkBAStatN(int n)
         }
         else{
             len = m_baStat.size()-2;
-            qDebug(" m_baStat.len :%d     size: %d",len, m_baStat.size());
+            //qDebug(" m_baStat.len :%d     size: %d",len, m_baStat.size());
             bsum = 0;
             for(i=0;i<len;i++) bsum+=m_baStat.at(2+i);
             m_baStat.append(bsum);
@@ -336,12 +349,64 @@ int ThreadUdpR::mkBAStatUart()
 // sttatus report
 void ThreadUdpR::doRemote()
 {
+    m_cmdD3 = m_stFrame.buf[1];
+    m_nRemote++;
+    m_nRemoteOK++;
+
     // make frame.status
     mkBAStat();
     mkBAStatUart();
 
 
 }
+// remote query
+void ThreadUdpR::do514001()
+{
+    QByteArray ba16;
+    char b8;
+
+    b8=0xaa;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+
+    int id32=getID32(0,0x25,1,0,0);
+    b8=id32;
+    ba16.append(b8);
+    b8=id32>>8;
+    ba16.append(b8);
+    b8=id32>>16;
+    ba16.append(b8);
+    b8=id32>>24;
+    ba16.append(b8);
+
+    b8=0x00;ba16.append(b8);
+    b8=0x01;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+    b8=0x55;ba16.append(b8);
+
+    b8=0x00;ba16.append(b8);
+    b8=0x88;ba16.append(b8);
+
+
+    sig7755(ba16);
+
+}
+
+void ThreadUdpR::do5140()
+{
+    switch(0x0ff & m_stFrame.buf[3]){
+    case 0x01:
+        do514001();
+        break;
+    default:
+        break;
+    }
+
+}
+
 void ThreadUdpR::do51()
 {
     switch(0x0ff & m_stFrame.buf[2]){
@@ -350,6 +415,9 @@ void ThreadUdpR::do51()
         break;
     case 0x52:// all address valid
         setOnly25(false);
+        break;
+    case 0x40:
+        do5140();
         break;
     default:
         break;
@@ -363,14 +431,27 @@ void ThreadUdpR::doShort5()
     case 0x01:// user define cmd
         do51();
         break;
-    case 0x02:// kill python app
+    case 0x02:// shutdown
+        //do52();
         break;
-    case 0x03:// delete python app
+    case 0x03:// restore , do nothing
         break;
     default:
         break;
     }
 
+}
+// c1.02.(ff,00)
+void ThreadUdpR::doFtpAck()
+{
+    char b82=2;
+    char b80=0;
+    char b8ff=0x0ff;
+
+    if(b82!=m_stFrame.buf[1])return;
+    if(b8ff==m_stFrame.buf[2]){
+        sigReleaseFtp();
+    }
 }
 
 void ThreadUdpR::doSingle()
@@ -385,6 +466,9 @@ void ThreadUdpR::doSingle()
     case 0x0c6:// upload file start     user.define
         //m_dataUpload.setup(m_stFrame);
         break;
+    case 0x0c1:
+        doFtpAck();
+        break;
     default:
         break;
     }
@@ -392,6 +476,7 @@ void ThreadUdpR::doSingle()
 }
 void ThreadUdpR::do1st()
 {
+
     switch(0x0ff & m_stFrame.buf[2]){
     case 0x0c6:
         m_nCmd1st = 0x0c6;
@@ -404,6 +489,10 @@ void ThreadUdpR::do1st()
     case 0x0b0:
         m_nCmd1st = 0x0b0;
         m_ftp.setData1(m_stFrame);
+        break;
+    case 0x0f:
+        m_nCmd1st = 0x0f;
+        if(0==(0x0ff & m_stFrame.buf[3])) m_data30.setData1(m_stFrame);
         break;
     default:
         break;
@@ -420,17 +509,20 @@ void ThreadUdpR::do2nd()
     case 0x0b0:
         m_ftp.setData2(m_stFrame);
         break;
+    case 0x0f:
+        m_data30.setData2(m_stFrame);
+        break;
     default:
         break;
     }
 }
 
 #define SECS_5 5
-#define SECS_120 30
+#define SECS_120 300
 //#define SECS_120 120
 void ThreadUdpR::doTimeSync()
 {
-    QDateTime dt,dtNow;
+    QDateTime dt,dtNow,dt1;
     struct timeval tv;
 
     //syslog(LOG_INFO," func doTimeSync ");
@@ -458,18 +550,41 @@ void ThreadUdpR::doTimeSync()
     }
     dtNow = QDateTime::currentDateTime();
     if(dt>dtNow.addSecs(SECS_5)
-            || dt<dtNow.addSecs(-SECS_5)
-            || dt>m_dtSet.addSecs(SECS_120)
+            || dt<dtNow.addSecs(-SECS_5) ){
+//            || dt>m_dtSet.addSecs(SECS_120)
+//            || dt<m_dtSet.addSecs(-SECS_120)){
+        tv.tv_sec=th;
+        tv.tv_usec = 0;
+        settimeofday(&tv,NULL);
+
+        dt1 = m_dtSet;
+        m_dtSet = dt;
+
+        syslog(LOG_INFO,"doTimeSync %ds new: %d-%d-%d %d:%d:%d   now: %d-%d-%d %d:%d:%d",SECS_5,
+               dt.date().year(),dt.date().month(),dt.date().day(),
+               dt.time().hour(),dt.time().minute(),dt.time().second(),
+               dtNow.date().year(),dtNow.date().month(),dtNow.date().day(),
+               dtNow.time().hour(),dtNow.time().minute(),dtNow.time().second()
+               );
+    }
+    else if(
+            //dt>dtNow.addSecs(SECS_5)
+            //|| dt<dtNow.addSecs(-SECS_5) ){
+            dt>m_dtSet.addSecs(SECS_120)
             || dt<m_dtSet.addSecs(-SECS_120)){
         tv.tv_sec=th;
         tv.tv_usec = 0;
         settimeofday(&tv,NULL);
 
+        dt1 = m_dtSet;
         m_dtSet = dt;
 
-        syslog(LOG_INFO,"doTimeSync ntohl  tn:%08x th:%08x  %d-%d-%d %d:%d:%d",tn,th,
+        syslog(LOG_INFO,"doTimeSync %ds  new: %d-%d-%d %d:%d:%d  set.old: %d-%d-%d %d:%d:%d",SECS_120,
                dt.date().year(),dt.date().month(),dt.date().day(),
-               dt.time().hour(),dt.time().minute(),dt.time().second());
+               dt.time().hour(),dt.time().minute(),dt.time().second(),
+               dt1.date().year(),dt1.date().month(),dt1.date().day(),
+               dt1.time().hour(),dt1.time().minute(),dt1.time().second()
+               );
     }
 
 }
@@ -579,11 +694,32 @@ void ThreadUdpR::printBA(QByteArray ba)
 void ThreadUdpR::print16ba()
 {
     QString str,str1;
-    for(int i=0;i<16;i++){
-        str1.sprintf(" %02x",0x0ff & m_ba16.at(i));
+    for(int i=0;i<2;i++){
+        str1.sprintf(" %02x",0x0ff & m_ba16.at(i+0));
         str+=str1;
     }
-    syslog(LOG_INFO," --%s-- validFrame16: %s",Q_FUNC_INFO,str.toLatin1().data());
+    str1.sprintf(" -- ");
+    str+=str1;
+    for(int i=0;i<4;i++){
+        str1.sprintf(" %02x",0x0ff & m_ba16.at(i+2));
+        str+=str1;
+    }
+    str1.sprintf(" - ");
+    str+=str1;
+    for(int i=0;i<8;i++){
+        str1.sprintf(" %02x",0x0ff & m_ba16.at(i+6));
+        str+=str1;
+    }
+    str1.sprintf("  -- ");
+    str+=str1;
+    for(int i=0;i<2;i++){
+        str1.sprintf(" %02x",0x0ff & m_ba16.at(i+14));
+        str+=str1;
+    }
+
+    syslog(LOG_INFO," (%d) validFrame16: %s",myobject::snLog++,
+           //Q_FUNC_INFO,
+           str.toLatin1().data());
 }
 
 void ThreadUdpR::print16()
@@ -596,7 +732,7 @@ void ThreadUdpR::print16()
         sprintf(buf1,"%02x ",0x0ff & m_pbuf16[i]);
         strcat(buf,buf1);
     }
-    qDebug("valid frame16: %s",buf);
+    syslog(LOG_INFO,"valid frame16: %s",buf);
 }
 
 void ThreadUdpR::newChar(char ch)
