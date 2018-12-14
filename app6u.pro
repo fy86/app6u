@@ -30,7 +30,8 @@ SOURCES += main.cpp \
     myobject.cpp \
     cmdftp.cpp \
     threadftp.cpp \
-    cmddata30.cpp
+    cmddata30.cpp \
+    threadstat.cpp
 
 HEADERS += \
     udpserver.h \
@@ -47,4 +48,5 @@ HEADERS += \
     myobject.h \
     cmdftp.h \
     threadftp.h \
-    cmddata30.h
+    cmddata30.h \
+    threadstat.h

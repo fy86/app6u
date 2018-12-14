@@ -11,6 +11,7 @@
 #include "mydef.h"
 #include "crc32.h"
 #include "myfiles.h"
+#include "myobject.h"
 
 class dataUpload : public QObject
 {
@@ -37,6 +38,7 @@ public:
     int m_nVersion;
     int m_fileID;
     int m_numPkt;
+    int m_C7pkt;
     int m_nSum7;
 
     /// 1st frame

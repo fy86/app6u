@@ -12,13 +12,18 @@ void cmdData30::setData1(st_frame st)
     m_nLen24 = ((0x0ff & st.buf[0])<<8) + (0x0ff & st.buf[1]);
     m_nLen4 = m_nLen24-2;
 
+    m_nDataType = 0x0ff & st.buf[2];
+
     m_baData.clear();
     m_bSum=false;//////////////////////
     m_nSumCal = 0x0;
+    //////////////
+#if 0
     for(int i=0;i<2;i++){
         m_nSumCal += 0x0ff & st.buf[i];
         m_nSumCal &= 0x0ff;
     }
+#endif
     for(int i=0;i<6;i++){
         addChar(st.buf[2+i]);
     }

@@ -3,6 +3,11 @@
 ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
+    int i;
+    for(i=0;i<16;i++)m_stat[i]=0;
+    m_stat[0]=1;
+    m_stat[1]=1;// arm status
+
     m_nRemote = 0;
     m_nRemoteOK=0;
     m_nRemoteErr=0;
@@ -18,6 +23,8 @@ ThreadUdpR::ThreadUdpR(QObject *parent) :
     connect(&m_ftp,SIGNAL(sigFtp(QByteArray)),this,SIGNAL(sigFtp(QByteArray)));
     connect(&m_ftp,SIGNAL(sigInt(int)),this,SIGNAL(sigInt(int)));
     connect(&m_ftp,SIGNAL(sigStartThreadFtp()),this,SIGNAL(sigStartThreadFtp()));
+
+
 
 }
 
@@ -76,20 +83,59 @@ int ThreadUdpR::getID32(int src2821, int des2013, int type1209, int info8, int i
     id32 |= (0x01 & info8)<<8;
     id32 |= 0x0ff & id71;
 
-    syslog(LOG_INFO," getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+    if(id32!=myobject::id32old){
+        myobject::id32old = id32;
+        syslog(LOG_INFO," getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+    }
 
     return id32;
 }
 
 int ThreadUdpR::getBAStatFile()
 {
+    int i,len;
     char b8;
+    char *p;
+    int n;
     m_baStatFile.clear();
-    for(int i=0;i<0x40;i++){
-        b8 = i + 0x10;
-        m_baStatFile.append(b8);
+    for(i=0;i<4;i++) m_baStatFile.append(m_stat[i]);
+
+    QFile file12(QString("/dev/shm/data12.bin"));
+    QFile file95(QString("/dev/shm/data95.bin"));
+    n=12;
+    if(file12.exists()){
+        if(file12.open(QIODevice::ReadOnly)){
+            QByteArray ba=file12.readAll();
+            len = ba.size();
+            ba.resize(n);
+            b8=0;
+            p=ba.data();
+            for(i=len;i<n;i++)p[i]=b8;
+            m_baStatFile.append(ba);
+        }
     }
-    return 20;
+    else {
+        b8 = 0xaa;
+        for(i=0;i<n;i++) m_baStatFile.append(b8);
+    }
+    n=95;
+    if(file95.exists()){
+        if(file95.open(QIODevice::ReadOnly)){
+            QByteArray ba=file95.readAll();
+            len = ba.size();
+            ba.resize(n);
+            b8=0;
+            p=ba.data();
+            for(i=len;i<n;i++)p[i]=b8;
+            m_baStatFile.append(ba);
+        }
+    }
+    else {
+        b8 = 0x55;
+        for(i=0;i<n;i++) m_baStatFile.append(b8);
+    }
+
+    return 0;
 }
 int ThreadUdpR::mkBAStatN(int n)
 {
@@ -97,14 +143,22 @@ int ThreadUdpR::mkBAStatN(int n)
     char b8,bsum;
     int i;
     int len;
+    short len16,nlen16;
+    char *p;
+    p=(char*)&nlen16;
 
     //qDebug(" mkba.stat.n : %d",n);
 
     switch(n){
     case 0:// 1st frame
         m_baStat.clear();
-        m_baStat.append((char)0x0);
-        m_baStat.append((char)0x0);//len
+        len=m_baStatFile.size()+6;
+        len16 = len;
+        nlen16 = htons(len16);
+        b8 = p[0];
+        m_baStat.append(b8);
+        b8=p[1];
+        m_baStat.append(b8);//len
 
         m_baStat.append((char)0x35);// fix
         m_baStat.append((char)0x01);// fix
@@ -210,10 +264,20 @@ int ThreadUdpR::mkBAStat()
 {
     int ret=0;
     int n;
+    char bSum=0;
+    int len;
+    int i;
     getBAStatFile();
 
     m_sumStat=0;
     mkBAStatN(0);
+    m_baStat.append(m_baStatFile);
+    bSum = 0;
+    len = m_baStat.size()-2;
+    for(i=0;i<len;i++)bSum+=m_baStat.at(i+2);
+    m_baStat.append(bSum);
+
+#if 0
     mkBAStatN(1);
     //mkBAStatN(2);
     if(m_baStatFile.size() <= m_lenStatAdd){
@@ -228,6 +292,8 @@ int ThreadUdpR::mkBAStat()
 
     }
     return ret;
+#endif
+    return 1;
 }
 int ThreadUdpR::mkBAStatUartN(int n)
 {
@@ -345,6 +411,14 @@ int ThreadUdpR::mkBAStatUart()
 
     return ret;
 }
+void ThreadUdpR::slotFile8(char b8)
+{
+    m_stat[3]=b8;
+}
+void ThreadUdpR::slotRunning8(char b8)
+{
+    m_stat[2]=b8;
+}
 
 // sttatus report
 void ThreadUdpR::doRemote()
@@ -394,12 +468,20 @@ void ThreadUdpR::do514001()
     sig7755(ba16);
 
 }
+void ThreadUdpR::do514002()
+{
+    sigRun(QString(QString("testbash.sh")));
+
+}
 
 void ThreadUdpR::do5140()
 {
     switch(0x0ff & m_stFrame.buf[3]){
     case 0x01:
         do514001();
+        break;
+    case 0x02:
+        do514002();// run bash testbash.sh
         break;
     default:
         break;
@@ -492,7 +574,7 @@ void ThreadUdpR::do1st()
         break;
     case 0x0f:
         m_nCmd1st = 0x0f;
-        if(0==(0x0ff & m_stFrame.buf[3])) m_data30.setData1(m_stFrame);
+        if(1==(0x0ff & m_stFrame.buf[3])) m_data30.setData1(m_stFrame);
         break;
     default:
         break;

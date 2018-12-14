@@ -13,6 +13,8 @@ class myLib : public QObject
 public:
     explicit myLib(QObject *parent = 0);
 
+    static int snSend;
+
     void printBA(QByteArray ba);
     void printBA(char *p,QByteArray ba);
     void printBA16(char *p,QByteArray ba);

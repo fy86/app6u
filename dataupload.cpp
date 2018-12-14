@@ -38,7 +38,10 @@ int dataUpload::getID32(int src2821, int des2013, int type1209, int info8, int i
     id32 |= (0x01 & info8)<<8;
     id32 |= 0x0ff & id71;
 
-    syslog(LOG_INFO," getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+    if(id32!=myobject::id32old){
+        myobject::id32old = id32;
+        syslog(LOG_INFO," getID32 : %08x  src:%02x des:%02x type:%01x info:%01x id:%02x",id32,src2821,des2013,type1209,info8,id71);
+    }
 
     return id32;
 
@@ -226,6 +229,7 @@ void dataUpload::init()
     m_numPkt = ((0x0ff & m_baData.at(len1-3))<<16)
             | ((0x0ff & m_baData.at(len1-2))<<8)
             | (0x0ff & m_baData.at(len1-1));// big endian 24b
+    m_C7pkt = -1;
 
     for(int i=0;i<len1;i++){
         sum+=0x0ff & m_baData.at(i);
@@ -250,15 +254,17 @@ void dataUpload::init()
            d.path().toLatin1().data(),
            d.dirName().toLatin1().data());
 
-    if(m_isArm) m_strFN=QString(m_baData.data()+4);
-    else m_strFN = QString("/home/c/tmp/save6u.bin");
+    //if(m_isArm) m_strFN=QString(m_baData.data()+4);
+    //else m_strFN = QString("/home/c/tmp/save6u.bin");
+
+    m_strFN = m_myfiles.getFullName(QString(m_baData.data()+4));
     syslog(LOG_INFO,"  save.filename: %s" , m_strFN.toLatin1().data());
     QFile::remove(m_strFN);
 }
 /// parse frame.complex  ??????
 void dataUpload::parseBA()
 {
-    syslog(LOG_INFO,"parse complex.frame");
+    syslog(LOG_INFO,"parse complex.frame  DataType:%02x",m_nDataType);
     switch(m_nDataType){
     case CMD_UPLOAD_INIT:// 0xc6
         init();
@@ -311,6 +317,9 @@ void dataUpload::doC7()
     //syslog(LOG_INFO," file.txt : %s",ba.data());
 
     id8=m_baData.at(2);//  at3.4.5 pkt.No.
+    m_C7pkt = ((0x0ff & m_baData.at(3))<<16)
+            | ((0x0ff & m_baData.at(4))<<8)
+            | (0x0ff & m_baData.at(5));// big endian 24b
 
     start = (0x0ff & m_baData.at(6))<<24;
     start |= (0x0ff & m_baData.at(7))<<16;
@@ -355,6 +364,10 @@ void dataUpload::doC7()
 
     }
 
+    if(m_numPkt==m_C7pkt){
+        m_myfiles.slotRunFile(m_strFN);
+        syslog(LOG_INFO," upload finish , try run file : %s",m_strFN.toLatin1().data());
+    }
 
 }
 

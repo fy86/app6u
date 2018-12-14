@@ -21,12 +21,17 @@
 #include "dataupload.h"
 #include "cmdftp.h"
 #include "cmddata30.h"
+#include "myobject.h"
+#include "myfiles.h"
 
 class ThreadUdpR : public QThread
 {
     Q_OBJECT
 public:
     explicit ThreadUdpR(QObject *parent = 0);
+
+    char m_stat[16];
+    myfiles m_myfiles;
 
     int m_nRemote;
     int m_nRemoteOK;
@@ -95,6 +100,7 @@ public:
     void do51();
     void do5140();
     void do514001();
+    void do514002();// run testbash.sh
     void doFtpAck();
 
 protected:
@@ -112,8 +118,12 @@ signals:
     void sigStartThreadFtp();
     void sigReleaseFtp();
 
+    void sigRun(QString);
+
 public slots:
     void newChar(char ch);
+    void slotFile8(char b8);
+    void slotRunning8(char b8);
 
 };
 

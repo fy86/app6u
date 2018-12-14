@@ -13,6 +13,9 @@
 #include "threaduart.h"
 #include "threaduartsend.h"
 #include "threadftp.h"
+#include "threadstat.h"
+
+#include "myfiles.h"
 
 //int myobject::snLog=0;
 
@@ -28,6 +31,8 @@ int main(int argc, char *argv[])
     threaduart thuart;
     threadUartSend thuartSend;
     threadftp thFtp;
+    threadStat thStat;
+    myfiles files;
 
     QObject::connect(&thudpr,SIGNAL(finished()),&a,SLOT(quit()));
     QObject::connect(&us,SIGNAL(newChar(char)),&thudpr,SLOT(newChar(char)));
@@ -49,11 +54,18 @@ int main(int argc, char *argv[])
 
     QObject::connect(&thFtp,SIGNAL(sigUart(QByteArray)),&thuart,SLOT(slotEnQ(QByteArray)));
 
+    QObject::connect(&thStat,SIGNAL(sigFile8(char)),&thudpr,SLOT(slotFile8(char)));
+    QObject::connect(&thStat,SIGNAL(sigRunning8(char)),&thudpr,SLOT(slotRunning8(char)));
+    QObject::connect(&thudpr,SIGNAL(sigRun(QString)),&files,SLOT(slotRunFile(QString)));
+
     //QObject::connect(&thudpr,SIGNAL(sig7755(QByteArray)),&thuart,SLOT(slot7755(QByteArray)));
+
+    files.restoreRunning();
 
     thuart.start();
     thudpr.start();
     thuartSend.start();
+    thStat.start();
 
     //qDebug("app6u start");
     syslog(LOG_INFO," ------ app6u start ------ %s",QDir::currentPath().toLatin1().data());

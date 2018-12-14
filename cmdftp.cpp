@@ -197,7 +197,9 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
 
     int len=ba512.size();
     int len24=2+32+2+2+4+4+len+4;
-    short s24=len24;
+    int len24e=(((len24+3+7)>>3)<<3)-3;
+    int nEx0=len24e-len24;
+    short s24=len24e;
     short ns24 = htons(s24);
     char *p=(char*)&ns24;
     QByteArray ba;
@@ -215,6 +217,9 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
 
     ba.append(ba42);
 
+    b8=0;
+    for(i=0;i<nEx0;i++)ba.append(b8);
+
     len=ba.size();
     for(i=0;i<len;i++)bsum+=ba.at(i);
     ba.append(bsum);
@@ -231,7 +236,14 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
 void cmdftp::doDownload()
 {
     int flen;
-    QFile file(QString(m_baFileName.data()));
+    QString strFn;
+    strFn = m_myfiles.findFile(QString(m_baFileName.data()));
+    if(strFn.length()<1){
+        syslog(LOG_INFO," ftp.file not found %s",strFn.toLatin1().data());
+        return;
+
+    }
+    QFile file(strFn);
     if(!file.exists()){
         syslog(LOG_INFO," ftp.file not found");
         return;

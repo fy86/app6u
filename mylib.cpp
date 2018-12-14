@@ -1,5 +1,7 @@
 #include "mylib.h"
 
+int myLib::snSend=0;
+
 myLib::myLib(QObject *parent) : QObject(parent)
 {
 
@@ -52,7 +54,7 @@ void myLib::printBA16(char *p,QByteArray ba)
         str1.sprintf(" %02x",0x0ff & ba.at(i+6));
         str.append(str1);
     }
-    syslog(LOG_INFO," %s",str.toLatin1().data());
+    syslog(LOG_INFO," (%d) %s",snSend++,str.toLatin1().data());
 
 }
 

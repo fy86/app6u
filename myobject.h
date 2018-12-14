@@ -16,6 +16,7 @@ public:
     explicit myobject(QObject *parent = 0);
 
     static int snLog;
+    static int id32old;
 
     bool m_isArm;
 

@@ -7,3 +7,4 @@ myobject::myobject(QObject *parent) :
 }
 
 int myobject::snLog=0;
+int myobject::id32old=0;
