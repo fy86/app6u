@@ -43,6 +43,7 @@ signals:
 
 public slots:
     void slotRunFile(QString filenameFull);
+    void slotRunCmd(QString cmd);
 
 };
 

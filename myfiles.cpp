@@ -68,6 +68,12 @@ bool myfiles::isPython(QString filenameFull)
 {
     return false;
 }
+void myfiles::slotRunCmd(QString cmd)
+{
+    m_pProcess = new QProcess();
+    m_pProcess->start(cmd);
+
+}
 
 void myfiles::slotRunFile(QString filenameFull)
 {

@@ -98,6 +98,8 @@ public:
     void doShort5();
 
     void do51();
+    void do52();// shutdown
+    void do53();// reboot;
     void do5140();
     void do514001();
     void do514002();// run testbash.sh
@@ -119,6 +121,7 @@ signals:
     void sigReleaseFtp();
 
     void sigRun(QString);
+    void sigRumCmd(QString);
 
 public slots:
     void newChar(char ch);

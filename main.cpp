@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     QObject::connect(&thStat,SIGNAL(sigFile8(char)),&thudpr,SLOT(slotFile8(char)));
     QObject::connect(&thStat,SIGNAL(sigRunning8(char)),&thudpr,SLOT(slotRunning8(char)));
     QObject::connect(&thudpr,SIGNAL(sigRun(QString)),&files,SLOT(slotRunFile(QString)));
+    QObject::connect(&thudpr,SIGNAL(sigRumCmd(QString)),&files,SLOT(slotRunCmd(QString)));
 
     //QObject::connect(&thudpr,SIGNAL(sig7755(QByteArray)),&thuart,SLOT(slot7755(QByteArray)));
 

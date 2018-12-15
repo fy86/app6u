@@ -3,6 +3,11 @@
 
 #include <QObject>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+
+
 #include "dataupload.h"
 
 class cmdftp : public dataUpload

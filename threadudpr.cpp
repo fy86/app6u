@@ -506,6 +506,18 @@ void ThreadUdpR::do51()
     }
 
 }
+// shutdown
+void ThreadUdpR::do52()
+{
+    sigRumCmd(QString("/sbin/shutdown -h now"));
+
+}
+// reboot
+void ThreadUdpR::do53()
+{
+    sigRumCmd(QString("/sbin/reboot"));
+
+}
 
 void ThreadUdpR::doShort5()
 {
@@ -514,9 +526,10 @@ void ThreadUdpR::doShort5()
         do51();
         break;
     case 0x02:// shutdown
-        //do52();
+        do52();
         break;
     case 0x03:// restore , do nothing
+        do53();
         break;
     default:
         break;

@@ -339,7 +339,8 @@ void dataUpload::doC7()
             | ((0x0ff & m_baData[len-3])<<16)
             | ((0x0ff & m_baData[len-2])<<8)
             | (0x0ff & m_baData[len-1]);
-    syslog(LOG_INFO,"crc32 : %08x     cal: %08x",crc32, crc32cal);
+    int icrc32=crc32cal;
+    syslog(LOG_INFO,"crc32 : %08x     cal: %08x   int.crc32:%d",crc32, crc32cal,icrc32);
 
     if(crc32cal!=crc32){
         echoC7(false,id8);

@@ -186,6 +186,9 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
     ba42.append(ba512);
 
     unsigned int crc=m_crc32.csp_crc32_memory((unsigned char*)ba512.data(),ba512.size());
+    int icrc = crc;
+    syslog(LOG_INFO," ===  ftp download crc32: %08x   signed : %d",crc,icrc);
+
     h32 = crc;
     n32 = htonl(h32);
     for(i=0;i<4;i++) ba42.append(p32[i]);
