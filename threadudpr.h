@@ -30,6 +30,9 @@ class ThreadUdpR : public QThread
 public:
     explicit ThreadUdpR(QObject *parent = 0);
 
+    char m_md5s,m_md5e;
+    char m_n30;
+
     char m_stat[16];
     myfiles m_myfiles;
 
@@ -38,6 +41,7 @@ public:
     int m_nRemoteErr;
     char m_cmdD3;
 
+    int m_aCmd1stID8[256];
     int m_nCmd1st;
     bool m_only25;
     void setOnly25(bool b);
@@ -48,7 +52,7 @@ public:
     int getBAStatFile();
     int mkBAStat();
     int mkBAStatUart();
-    int mkBAStatUartN(int n);
+    int mkBAStatUartN(int n,char id8);
     int mkBAStatN(int n);
     int m_sumStat;
     int m_lenStatAdd;
@@ -97,6 +101,7 @@ public:
     void doRemote();
     void doShort5();
 
+    void doC8(bool bOK,char idv,char id8);
     void do51();
     void do52();// shutdown
     void do53();// reboot;
@@ -127,6 +132,9 @@ public slots:
     void newChar(char ch);
     void slotFile8(char b8);
     void slotRunning8(char b8);
+    void slotMD5(QByteArray ba);
+
+    void slot30();
 
 };
 

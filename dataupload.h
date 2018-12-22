@@ -5,7 +5,9 @@
 #include <QByteArray>
 #include <QFile>
 #include <QIODevice>
+#include <QCryptographicHash>
 
+#include <syslog.h>
 #include <arpa/inet.h>
 
 #include "mydef.h"
@@ -18,6 +20,10 @@ class dataUpload : public QObject
     Q_OBJECT
 public:
     explicit dataUpload(QObject *parent = 0);
+
+    void fileMD5(QString strFN);
+
+    char m_id8;/////
 
     int m_nCmd1st;
 
@@ -70,6 +76,7 @@ public:
 
 signals:
     void sigUart(QByteArray);
+    void sigMD5(QByteArray);
 
 public slots:
 

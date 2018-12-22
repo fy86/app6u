@@ -26,7 +26,7 @@ public:
 
     void doDownload();
     void mkFtpFrame(int sn,int nPkg,QByteArray ba512);
-    void mkUart(int n,QByteArray ba8);
+    void mkUart(int n,QByteArray ba8,char id8);
     void mkUart0(QByteArray ba8);
 signals:
     void sigFtp(QByteArray);// to thread.ftp

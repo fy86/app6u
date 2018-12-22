@@ -16,6 +16,7 @@ public:
     virtual void doData30();
 
 signals:
+    void sig30();
 
 public slots:
 };

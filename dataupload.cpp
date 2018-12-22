@@ -123,7 +123,7 @@ void dataUpload::echoStartOK(bool bOK,char id8)
         b8=0x88;
         ba16.append(b8);
 
-        sigUart(ba16);
+        emit sigUart(ba16);
 
 
 
@@ -204,7 +204,7 @@ void dataUpload::echoC7(bool bOK,char id8)
         b8=0x88;
         ba16.append(b8);
 
-        sigUart(ba16);
+        emit sigUart(ba16);
 
 
 
@@ -365,9 +365,29 @@ void dataUpload::doC7()
 
     }
 
+    //fileMD5(m_strFN);
+    syslog(LOG_INFO," savefile   numPkt:%d   C7pkt:%d",m_numPkt,m_C7pkt);
     if(m_numPkt==m_C7pkt){
+        fileMD5(m_strFN);
         m_myfiles.slotRunFile(m_strFN);
         syslog(LOG_INFO," upload finish , try run file : %s",m_strFN.toLatin1().data());
+    }
+
+}
+void dataUpload::fileMD5(QString strFN)
+{
+    QFile f(strFN);
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    QByteArray ba,r;
+
+    if(f.open(QIODevice::ReadOnly)){
+        hash.reset();
+        ba=f.readAll();
+        f.close();
+        hash.addData(ba);
+        r=hash.result();
+        syslog(LOG_INFO,"%s   md5:%s     %02x....%02x",strFN.toLatin1().data(),r.toHex().data(),0x0ff & r.at(0),0x0ff & r.at(r.size()-1));
+        emit sigMD5(r);
     }
 
 }

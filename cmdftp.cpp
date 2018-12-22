@@ -38,7 +38,7 @@ void cmdftp::mkUart0(QByteArray ba8)
 
 }
 
-void cmdftp::mkUart(int n, QByteArray ba8)
+void cmdftp::mkUart(int n, QByteArray ba8,char id8)
 {
     //int ret=0;
     QByteArray bb8;
@@ -62,7 +62,7 @@ void cmdftp::mkUart(int n, QByteArray ba8)
         ba16.append(b8);
         bsum+=b8;
 
-        id32=getID32(MY_CAN_ID,0,2,0,0);
+        id32=getID32(MY_CAN_ID,0,2,0,id8);
         b8= id32;
         ba16.append(b8);
         bsum+=b8;
@@ -90,7 +90,7 @@ void cmdftp::mkUart(int n, QByteArray ba8)
         ba16.append(b8);
 
         //sigUart(ba16);
-        sigFtp(ba16);
+        emit sigFtp(ba16);
 
         break;
     default:
@@ -105,7 +105,7 @@ void cmdftp::mkUart(int n, QByteArray ba8)
         ba16.append(b8);
         bsum+=b8;
 
-        id32=getID32(MY_CAN_ID,0,3,0,0);
+        id32=getID32(MY_CAN_ID,0,3,0,id8);
         b8= id32;
         ba16.append(b8);
         bsum+=b8;
@@ -133,7 +133,7 @@ void cmdftp::mkUart(int n, QByteArray ba8)
         ba16.append(b8);
 
         //sigUart(ba16);
-        sigFtp(ba16);
+        emit sigFtp(ba16);
 
         break;
     }
@@ -144,6 +144,7 @@ void cmdftp::mkUart(int n, QByteArray ba8)
 // start sn=0
 void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
 {
+    int id8;
     int i;
     char b8=0;
     QByteArray ba42;// table4.2
@@ -228,11 +229,13 @@ void cmdftp::mkFtpFrame(int sn, int nPkg, QByteArray ba512)
     ba.append(bsum);
 
     int n=(ba.size()+7)>>3;
-    sigInt(n);/////////////////////////////////////////
+    emit sigInt(n);/////////////////////////////////////////
+    id8=myobject::ID8send;
+    myobject::ID8send++;
     for(i=0;i<n;i++){
         QByteArray ba8;
         ba8=ba.mid(i<<3,8);
-        mkUart(i,ba8);
+        mkUart(i,ba8,id8);
     }
 }
 
@@ -381,7 +384,7 @@ void cmdftp::echoFtp(bool bOK)
         ba16.append(b8);
 
         //////////////
-        sigUart(ba16);
+        emit sigUart(ba16);
 
 
 }

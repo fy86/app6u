@@ -18,6 +18,8 @@ public:
     static int snLog;
     static int id32old;
 
+    static char ID8send;
+
     bool m_isArm;
 
 signals:

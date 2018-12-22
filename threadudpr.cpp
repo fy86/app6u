@@ -4,9 +4,19 @@ ThreadUdpR::ThreadUdpR(QObject *parent) :
     QThread(parent)
 {
     int i;
+    for(i=0;i<256;i++)m_aCmd1stID8[i]=0;
     for(i=0;i<16;i++)m_stat[i]=0;
     m_stat[0]=1;
-    m_stat[1]=1;// arm status
+    m_stat[1]=2;// arm status    app6u.version
+
+    m_md5s = 0x55;
+    m_md5e = 0x55;
+
+    m_stat[4]=m_md5s;
+    m_stat[5]=m_md5e;
+
+    m_n30=0;
+    m_stat[6]=m_n30;
 
     m_nRemote = 0;
     m_nRemoteOK=0;
@@ -24,8 +34,25 @@ ThreadUdpR::ThreadUdpR(QObject *parent) :
     connect(&m_ftp,SIGNAL(sigInt(int)),this,SIGNAL(sigInt(int)));
     connect(&m_ftp,SIGNAL(sigStartThreadFtp()),this,SIGNAL(sigStartThreadFtp()));
 
+    connect(&m_dataUpload,SIGNAL(sigMD5(QByteArray)),this,SLOT(slotMD5(QByteArray)));
+    connect(&m_data30,SIGNAL(sig30()),this,SLOT(slot30()));
 
 
+
+}
+void ThreadUdpR::slot30()
+{
+    m_n30++;
+    m_stat[6]=m_n30;
+}
+
+void ThreadUdpR::slotMD5(QByteArray ba)
+{
+    m_md5s = ba.at(0);
+    m_md5e = ba.at(ba.size()-1);
+
+    m_stat[4]=m_md5s;
+    m_stat[5]=m_md5e;
 }
 
 void ThreadUdpR::setOnly25(bool b)
@@ -98,11 +125,11 @@ int ThreadUdpR::getBAStatFile()
     char *p;
     int n;
     m_baStatFile.clear();
-    for(i=0;i<4;i++) m_baStatFile.append(m_stat[i]);
+    for(i=0;i<7;i++) m_baStatFile.append(m_stat[i]);/////////////// add md5 2bytes  num30
 
     QFile file12(QString("/dev/shm/data12.bin"));
     QFile file95(QString("/dev/shm/data95.bin"));
-    n=12;
+    n=9;//    = 12-2-1   add md5.0...e   num30
     if(file12.exists()){
         if(file12.open(QIODevice::ReadOnly)){
             QByteArray ba=file12.readAll();
@@ -295,7 +322,7 @@ int ThreadUdpR::mkBAStat()
 #endif
     return 1;
 }
-int ThreadUdpR::mkBAStatUartN(int n)
+int ThreadUdpR::mkBAStatUartN(int n,char id8)
 {
     int ret=0;
     int i;
@@ -321,7 +348,7 @@ int ThreadUdpR::mkBAStatUartN(int n)
         ba16.append(b8);
         bsum+=b8;
 
-        id32=getID32(MY_CAN_ID,0,2,0,0);
+        id32=getID32(MY_CAN_ID,0,2,0,id8);
         b8= id32;
         ba16.append(b8);
         bsum+=b8;
@@ -363,7 +390,7 @@ int ThreadUdpR::mkBAStatUartN(int n)
         ba16.append(b8);
         bsum+=b8;
 
-        id32=getID32(MY_CAN_ID,0,3,0,0);
+        id32=getID32(MY_CAN_ID,0,3,0,id8);
         b8= id32;
         ba16.append(b8);
         bsum+=b8;
@@ -403,11 +430,15 @@ int ThreadUdpR::mkBAStatUart()
     int ret=0;
     int len;
     int i,n;
+    char id8;
 
     len = m_baStat.size();
     n=len>>3;
 
-    for(i=0;i<n;i++)mkBAStatUartN(i);
+    id8=myobject::ID8send;
+    myobject::ID8send++;
+
+    for(i=0;i<n;i++)mkBAStatUartN(i,id8);
 
     return ret;
 }
@@ -488,6 +519,89 @@ void ThreadUdpR::do5140()
     }
 
 }
+void ThreadUdpR::doC8(bool bOK,char idv,char id8)
+{
+    int i;
+    int id32;
+    QByteArray ba16;
+    char b8,bsum,byteOK;
+
+    if(bOK){
+        byteOK = 0x0ff;
+    }
+    else byteOK = 0x55;
+
+    bsum=0;
+    ba16.clear();
+
+    b8=0xaa;
+    bsum+=b8;
+    ba16.append(b8);
+
+    b8=0x55;
+    ba16.append(b8);
+    bsum+=b8;
+
+    id32=getID32(MY_CAN_ID,0,1,0,0);
+    b8= id32;
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8= id32>>8;
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=id32>>16;
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=id32>>24;
+    ba16.append(b8);
+    bsum+=b8;
+
+    // byte 1 , base 1
+    b8=0x97;///////////////// 97 97
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=byteOK;////////////////////// byteOK
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=idv;
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=id8;////////////////////////////////////// fixme
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=0xaa;//
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=0xaa;
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=0xaa;
+    ba16.append(b8);
+    bsum+=b8;
+
+    b8=0x97;/////        97 97 97
+    ba16.append(b8);
+    bsum+=b8;
+
+    ba16.append(bsum);
+
+    b8=0x88;
+    ba16.append(b8);
+
+    sigUart(ba16);
+
+
+
+}
 
 void ThreadUdpR::do51()
 {
@@ -558,8 +672,9 @@ void ThreadUdpR::doSingle()
     case 0x05:// short cmd   user.define
         doShort5();
         break;
-    case 0x0c6:// upload file start     user.define
-        //m_dataUpload.setup(m_stFrame);
+    case 0x0c8:// upload file end     user.define
+        //
+        doC8(true,m_stFrame.buf[3],m_stFrame.buf[4]);
         break;
     case 0x0c1:
         doFtpAck();
@@ -571,10 +686,14 @@ void ThreadUdpR::doSingle()
 }
 void ThreadUdpR::do1st()
 {
+    int sn;
+
+    sn=0x0ff & m_stFrame.id;
 
     switch(0x0ff & m_stFrame.buf[2]){
     case 0x0c6:
         m_nCmd1st = 0x0c6;
+
         m_dataUpload.setData1(m_stFrame);
         break;
     case 0x0c7:

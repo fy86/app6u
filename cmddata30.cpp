@@ -39,4 +39,5 @@ void cmdData30::doData30()
     if(file.open(QIODevice::ReadWrite)){
         file.write(m_baData.data()+2,m_nLen4);
     }
+    emit sig30();
 }
